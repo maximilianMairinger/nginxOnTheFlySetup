@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    script: "index.js",
+    script: "server.js",
     name: "nginxOnTheFlySetup",
     exec_mode : "cluster",
     instances: 2,
