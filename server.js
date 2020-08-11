@@ -9,7 +9,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 
-const wss = new WebSocket.Server({ port });
+const wss = new WebSocket.Server({ port: port+1 });
 wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     console.log("qwe", message)
