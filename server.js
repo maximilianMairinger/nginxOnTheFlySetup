@@ -3,7 +3,7 @@ const bodyParser = require("body-parser")
 const app = express()
 const WebSocket = require('ws');
 const args = require("yargs").argv
-const port = args.port !== undefined ? args.port : console.log("Serving on port 443\n") || 443
+const port = args.port !== undefined ? args.port : 4400
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
