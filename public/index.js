@@ -2,12 +2,14 @@ const domain = location.origin
 console.log("domain", domain)
 
 
-// const ws = new WebSocket('ws://www.host.com/path');
+
+const ws = new WebSocket(domain);
  
-// ws.on('open', function open() {
-//   ws.send('something');
-// });
+ws.on('open', function open() {
+  console.log("open")
+  ws.send('something');
+});
  
-// ws.on('message', function incoming(data) {
-//   console.log(data);
-// });
+ws.on('message', function incoming(data) {
+  console.log(data);
+});
