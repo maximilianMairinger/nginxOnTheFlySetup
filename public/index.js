@@ -3,13 +3,13 @@ console.log("domain", domain)
 
 
 
-const ws = new WebSocket("ws://qwer.qq.maximilian.mairinger.com");
+const ws = new WebSocket("ws://qwer.qq.maximilian.mairinger.com:8800");
  
-ws.on('open', function open() {
+ws.addEventListener('open', function open() {
   console.log("open")
   ws.send('something');
 });
  
-ws.on('message', function incoming(data) {
+ws.addEventListener('message', function incoming(data) {
   console.log(data);
 });
