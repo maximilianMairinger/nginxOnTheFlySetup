@@ -3,7 +3,7 @@ console.log("domain", domain)
 
 
 
-const ws = new WebSocket(domain);
+const ws = new WebSocket("ws://qwer.qq.maximilian.mairinger.com");
  
 ws.on('open', function open() {
   console.log("open")
