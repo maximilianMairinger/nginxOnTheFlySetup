@@ -1,7 +1,19 @@
 const ws = new WebSocket("ws://" + location.host + "/ws/")
 
 
+
+
 const gui = (() => {
+  function saniHTML(html) {
+    return sanitizeHtml(Autolinker.link(html), {
+      allowedTags: [ 'b', 'i', 'em', 'strong', 'a' ],
+      allowedAttributes: {
+        'a': [ 'href', "target" ]
+      },
+      disallowedTagsMode: "escape",
+    })
+  }
+  
   function apd(q) {
     if (typeof q === "string") body.insertAdjacentHTML("beforeend", q)
     else if (q instanceof Element) body.append(q)
@@ -11,6 +23,7 @@ const gui = (() => {
   let onAnyLog
 
   function log(msg, type) {
+    msg = saniHTML(msg)
     if (onAnyLog) onAnyLog()
     let div = document.createElement("div")
     div.classList.add("message")
@@ -28,7 +41,7 @@ const gui = (() => {
           dots += "."
         }
         msg = msgWithoutDots + dots
-        div.innerText = msg
+        div.innerHTML = msg
 
         if (currentDots >= 3) {
           currentDots = 0
@@ -37,15 +50,15 @@ const gui = (() => {
 
       onAnyLog = () => {
         clearInterval(interval)
-        div.innerText = msgWithoutDots + "... Done!"
+        div.innerHTML = msgWithoutDots + "... Done!"
         onAnyLog = undefined
       }
 
     }
-    else if (!msg.endsWith(".")) {
+    else if (!(msg.endsWith(".") || msg.endsWith("!") || msg.endsWith("?"))) {
       msg = msg + "."
     }
-    div.innerText = msg
+    div.innerHTML = msg
     apd(div)
     apd(`<br><br>`)
   }
@@ -55,7 +68,7 @@ const gui = (() => {
     return new Promise((res) => {
       if (onAnyLog) onAnyLog()
       if (!(question.endsWith("?") || question.endsWith(":")) && !options.nonoPostFix) question = question + ":"
-      apd(`<div class="message"></div><input id="inp${id}" type="${options.type}" autocomplete="off"><br><br>`)
+      apd(`<div class="message">${saniHTML(question)}</div><input id="inp${id}" type="${options.type}" autocomplete="off"><br><br>`)
       let inputElem = document.getElementById("inp" + id)
       inputElem.focus()
       inputElem.addEventListener("keydown", ({key}) => {
@@ -73,8 +86,6 @@ const gui = (() => {
       }
 
       onAnyLog = submit
-      let textElem = inputElem.previousSibling
-      textElem.innerText = question
       let currentlyFine = true
       if (options.replace) {
         inputElem.addEventListener("input", () => {
@@ -118,7 +129,7 @@ ws.addEventListener("message", (msg) => {
 let subdomains = location.host.split(".").reverse()
 let overshoot = subdomains.splice(0, 3);
 
-gui.log(`View any version of any repository by going to <version>.<repo>.${overshoot.reverse().join(".")}`);
+gui.log(`View any version of any repository by going to <i>[version].[repo].${overshoot.reverse().join(".")}</i>`);
 
 (async () => {
   if (subdomains.length < 2) name()
@@ -159,8 +170,7 @@ gui.log(`View any version of any repository by going to <version>.<repo>.${overs
 })()
 
 async function name() {
-  console.log("qwe")
-  gui.log(`You can link a repo at a specific commit hash under ${location.host}!`)
+  gui.log(`You may link a repo under this alias <i>${location.host}</i>!`)
   let res = await gui.ask(`Repository`)
   let repo
   let hash
@@ -182,3 +192,6 @@ setTimeout(() => {
     gui.log("Npm install")
   }, 2000)
 }, 1000)
+
+
+gui.log("hello google.com")

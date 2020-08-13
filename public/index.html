@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Please wait...</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/autolinker/3.14.1/Autolinker.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/slugify"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sanitize-html/1.27.3/sanitize-html.min.js"></script>
   <script src="./index.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=PT+Mono&PT+Sans:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -22,6 +24,7 @@
       background-color: rgb(10, 10, 14);
       overflow: auto;
       line-height: 20px;
+      min-width: 470px;
     }
     .body {
       width: 60%;
@@ -53,6 +56,10 @@
     }
     .wrn, .warn, .warning {
       color: orange
+    }
+
+    a:visited{
+      color:rgb(255, 0, 98);
     }
   </style>
 </head>
