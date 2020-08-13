@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Please wait...</title>
+  <script src="https://cdn.jsdelivr.net/npm/slugify"></script>
   <script src="./index.js" defer></script>
-  <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=PT+Mono&PT+Sans:wght@400;700&display=swap" rel="stylesheet">
   <style>
     ::selection {
       background-color: rgb(143, 143, 143);
     }
     html {
-      font-family: 'PT Sans', sans-serif;
+      font-family: 'PT Mono', monospace;
       color: white;
     }
     body {
@@ -20,6 +21,7 @@
       margin: 0;
       background-color: rgb(10, 10, 14);
       overflow: auto;
+      line-height: 20px;
     }
     .body {
       width: 60%;
@@ -42,10 +44,16 @@
 
     input, .message {
       margin-right: 7px;
-      position: relative;
-      float: left;
+      display: inline;
+      max-width: 100%;
     }
-    
+
+    .err, .error {
+      color: red
+    }
+    .wrn, .warn, .warning {
+      color: orange
+    }
   </style>
 </head>
 <body>
