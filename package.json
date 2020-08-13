@@ -10,8 +10,6 @@
     "shelljs": "^0.8.4",
     "slugify": "^1.4.5",
     "ws": "^7.3.1",
-    "xrray": "^4.6.8",
-    "xtring": "^1.2.0",
     "yargs": "^15.4.1"
   },
   "devDependencies": {},

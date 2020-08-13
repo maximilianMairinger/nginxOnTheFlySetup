@@ -5,8 +5,6 @@ const WebSocket = require('ws');
 const args = require("yargs").argv
 const port = args.port !== undefined ? args.port : 4400
 const shell = require("shelljs")
-require("xrray")()
-require("xtring")()
 const slugify = require("slugify")
 const path = require("path")
 const { promises: fs } = require("fs")
@@ -28,7 +26,7 @@ app.use(bodyParser.json());
 const wss = new WebSocket.Server({ port: port+1 });
 let wsLs = []
 wss.on('connection', (ws) => {
-  wsLs.add(ws)
+  wsLs.push(ws)
   ws.send({init: {id: wsLs.length}})
 })
 
