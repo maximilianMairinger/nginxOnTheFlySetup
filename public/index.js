@@ -42,6 +42,9 @@ const gui = (() => {
       }
 
     }
+    else if (!msg.endsWith(".")) {
+      msg = msg + "."
+    }
     div.innerText = msg
     apd(div)
     apd(`<br><br>`)
