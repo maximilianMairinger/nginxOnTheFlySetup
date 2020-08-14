@@ -181,37 +181,3 @@ gui.log(`View any version of any repository by going to <i>[version].[repo].${ov
   else gui.log(res.log)   // Done (Updates received via ws)
 
 })()
-
-function name() {
-  gui.log(`You may link a repo under this alias <i>${location.host}</i>!`)
-  let r = await gui.ask(`Repository`)
-  let repo
-  let hash
-  if (r.includes("@")) {
-    let split = r.split("@")
-    repo = split[0]
-    hash = split[1]
-  }
-  else {
-    repo = r
-    hash = await gui.ask(`Commit hash`)
-  }
-
-
-  let res = await (await fetch("/try", {
-    headers: new Headers({'Content-Type': 'application/json'}),
-    method: "post",
-    body: JSON.stringify({
-      id,
-      commit: {
-        repo,
-        hash
-      },
-      domain
-    })
-  })).json()
-  
-
-  if (res.err) gui.err(res.err)
-  else gui.log(res.log)   // Done (Updates received via ws)
-}
