@@ -118,7 +118,11 @@ const gui = (() => {
   function err(msg) {    
     log(msg, "err")
   }
-  return { log, inq, ask: inq, err }
+
+  function warn(msg) {    
+    log(msg, "warn")
+  }
+  return { log, inq, ask: inq, err, warn }
 })()
 
 
