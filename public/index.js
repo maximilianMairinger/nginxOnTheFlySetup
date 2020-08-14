@@ -111,10 +111,14 @@ const gui = (() => {
       }
       id++
     })
-    
+
+
   }
 
-  return { log, inq, ask: inq }
+  function err(msg) {    
+    log(msg, "err")
+  }
+  return { log, inq, ask: inq, err }
 })()
 
 
@@ -132,66 +136,86 @@ let overshoot = subdomains.splice(0, 3);
 gui.log(`View any version of any repository by going to <i>[version].[repo].${overshoot.reverse().join(".")}</i>`);
 
 (async () => {
-  if (subdomains.length < 2) name()
-  else if (subdomains.length > 2) name()
-  else {
-
-    let repo = subdomains[0]
-    let hash = subdomains[1]
-
-    gui.log(`Cloning ${repo}@${hash}...`)
-
-
-    let res = await (await fetch("/try", {
-      headers: new Headers({'Content-Type': 'application/json'}),
-      method: "post",
-      body: JSON.stringify({
-        id,
-        commit: {
-          repo,
-          hash
-        }
-      })
-    })).json()
-    
-
-    if (res.err) {
-      if (res.err === "RepoNotFound") gui.log(`Repository ${repo} not found.`, "err")
-      else if (res.err === "UnexpectedError") gui.log(`An unexpected error occurred.`, "err")
-      else if (res.err === "HashNotFound") gui.log(`Commit hash ${hash} not found for repository ${repo}.`, "err")
-
-      
+  let hash
+  let repo
+  let domain
+  if (subdomains.length < 2 || subdomains.length > 2) {
+    gui.log(`You may link a repo under this alias <i>${location.host}</i>!`)
+    let r = await gui.ask(`Repository`)
+    if (r.includes("@")) {
+      let split = r.split("@")
+      repo = split[0]
+      hash = split[1]
     }
     else {
-
+      repo = r
+      hash = await gui.ask(`Commit hash`)
     }
-
+    domain = location.host
   }
+  else {
+    repo = subdomains[0]
+    hash = subdomains[1]
+  }
+
+  let res = await (await fetch("/try", {
+    headers: new Headers({'Content-Type': 'application/json'}),
+    method: "post",
+    body: JSON.stringify({
+      id,
+      commit: {
+        repo,
+        hash
+      },
+      domain
+    })
+  })).json()
+  
+
+  if (res.err) gui.err(res.err)
+  else gui.log(res.log)   // Done (Updates received via ws)
+
 })()
 
-async function name() {
+function name() {
   gui.log(`You may link a repo under this alias <i>${location.host}</i>!`)
-  let res = await gui.ask(`Repository`)
+  let r = await gui.ask(`Repository`)
   let repo
   let hash
-  if (res.includes("@")) {
-    let split = res.split("@")
+  if (r.includes("@")) {
+    let split = r.split("@")
     repo = split[0]
     hash = split[1]
   }
   else {
-    repo = split
+    repo = r
+    hash = await gui.ask(`Commit hash`)
   }
+
+
+  let res = await (await fetch("/try", {
+    headers: new Headers({'Content-Type': 'application/json'}),
+    method: "post",
+    body: JSON.stringify({
+      id,
+      commit: {
+        repo,
+        hash
+      },
+      domain
+    })
+  })).json()
+  
+
+  if (res.err) gui.err(res.err)
+  else gui.log(res.log)   // Done (Updates received via ws)
 }
 
 
-setTimeout(() => {
-  gui.log("Cloning repo...")
+// setTimeout(() => {
+//   gui.log("Cloning repo...")
 
-  setTimeout(() => {
-    gui.log("Npm install")
-  }, 2000)
-}, 1000)
-
-
-gui.log("hello google.com")
+//   setTimeout(() => {
+//     gui.err("Npm install")
+//   }, 2000)
+// }, 1000)
