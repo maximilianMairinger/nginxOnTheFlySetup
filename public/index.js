@@ -128,7 +128,8 @@ const gui = (() => {
 
 let id
 ws.addEventListener("message", (msg) => {
-  if (msg.init !== undefined) id = msg.init.id
+  if (msg.log !== undefined) gui.log(msg)
+  else if (msg.init !== undefined) id = msg.init.id
   
 })
 
@@ -214,12 +215,3 @@ function name() {
   if (res.err) gui.err(res.err)
   else gui.log(res.log)   // Done (Updates received via ws)
 }
-
-
-// setTimeout(() => {
-//   gui.log("Cloning repo...")
-
-//   setTimeout(() => {
-//     gui.err("Npm install")
-//   }, 2000)
-// }, 1000)
