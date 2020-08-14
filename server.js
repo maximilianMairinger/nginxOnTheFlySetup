@@ -64,6 +64,16 @@ app.post("/try", async ({body: q}, res) => {
       return
     }
 
+    let hashPath = path.join(repoPath, q.commit.hash)
+    try {
+      await fs.access(hashPath)
+    }
+    catch(e) {
+      res({err: `Go away! :c`})
+      return
+    }
+    await fs.mkdir(hashPath)
+
 
     if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
 
