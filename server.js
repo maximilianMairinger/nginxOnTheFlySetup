@@ -81,8 +81,9 @@ app.post("/try", async ({body: q}, res) => {
     let createAppConf
     let createNginxConf
     try {
-      createAppConf = require("./../nginxCdSetup/app/createAppConf.js")
-      createNginxConf = require("./../nginxCdSetup/app/createNginxConf.js")
+      let o = require("./../nginxCdSetup/dist/nginxCdSetup.js")
+      createAppConf = o.createAppConf
+      createNginxConf = o.createNginxConf
     }
     catch(e) {
       console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
