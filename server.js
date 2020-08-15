@@ -23,10 +23,116 @@ let wsApp = expressWs(app)
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-let wsLs = []
 app.ws("/", (ws) => {
-  wsLs.push(ws)
-  ws.send({init: {id: wsLs.length}})
+  function log(msg) {
+    ws.send({log: msg})
+  }
+  function err(msg) {
+    ws.send({err: msg})
+  }
+
+
+  ws.on("message", (mes) => {
+    if (mes.try) {
+      let q = mes.try
+
+
+      try {
+    
+        await delay(1000)
+        log("Working...")
+        await delay(1000)
+        log("YAS")
+    
+        throw new Error("testing")
+        let old = q.commit.repo
+        q.commit.repo = sanitizeFilename(old)
+        if (old !== q.commit.repo) {
+          err("Go away! :c")
+          return
+        }
+        old = undefined
+    
+        let repoPath = path.join(appDest, q.commit.repo)
+        try {
+          await fs.access(repoPath)
+        }
+        catch(e) {
+          err(`${q.commit.repo} is not an active repository.`)
+          return
+        }
+    
+        let hashPath = path.join(repoPath, q.commit.hash)
+        try {
+          await fs.access(hashPath)
+        }
+        catch(e) {
+          err(`Go away! :c`)
+          return
+        }
+        await fs.mkdir(hashPath)
+    
+    
+        if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
+    
+    
+        if (!q.domain.endsWidth(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
+        q.domain = slugify(q.domain.toLowerCase())
+    
+    
+        
+        // let ws = wsLs[q.id]
+    
+    
+    
+    
+        let createAppConf
+        let createNginxConf
+        try {
+          let o = require("./../nginxCdSetup/dist/nginxCdSetup.js")
+          createAppConf = o.createAppConf
+          createNginxConf = o.createNginxConf
+        }
+        catch(e) {
+          console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
+          err("Unable to find peer dependencies. Check logs for additional infos.")
+          return
+        }
+    
+    
+        
+    
+        
+        let conf = {appDest, nginxDest, domain: q.domain, name: q.commit.repo, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
+    
+        
+    
+        try {
+          await createAppConf(conf, log)
+          await createNginxConf(conf, log)
+          log("Done")
+          console.log("Done")
+        } catch (e) {
+          err(e.message)
+          console.log("Error: " + e.message)
+          console.log("Cmd: " + e.cmd)
+          console.log("Stderr: " + e.stderr)
+        }
+    
+        
+        
+        
+    
+    
+    
+    
+      }
+      catch(e) {
+        console.log("Unexpected error in try: ", e)
+        err("Internal error")
+      }
+    }
+  })
 })
 
 
@@ -45,102 +151,7 @@ app.use(express.static('public'))
 }
 */
 app.post("/try", async ({body: q}, res) => {
-  try {
-    
-    await delay(1000)
-    let ws = wsLs[q.id]
-    ws.send({log: "Working..."})
-    await delay(1000)
-    ws.send({log: "YEAAAA"})
-
-    throw new Error("testing")
-    let old = q.commit.repo
-    q.commit.repo = sanitizeFilename(old)
-    if (old !== q.commit.repo) {
-      res({err: "Go away! :c"})
-      return
-    }
-    old = undefined
-
-    let repoPath = path.join(appDest, q.commit.repo)
-    try {
-      await fs.access(repoPath)
-    }
-    catch(e) {
-      res({err: `${q.commit.repo} is not an active repository.`})
-      return
-    }
-
-    let hashPath = path.join(repoPath, q.commit.hash)
-    try {
-      await fs.access(hashPath)
-    }
-    catch(e) {
-      res({err: `Go away! :c`})
-      return
-    }
-    await fs.mkdir(hashPath)
-
-
-    if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
-
-
-    if (!q.domain.endsWidth(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
-    q.domain = slugify(q.domain.toLowerCase())
-
-
-    
-    // let ws = wsLs[q.id]
-
-
-
-
-    let createAppConf
-    let createNginxConf
-    try {
-      let o = require("./../nginxCdSetup/dist/nginxCdSetup.js")
-      createAppConf = o.createAppConf
-      createNginxConf = o.createNginxConf
-    }
-    catch(e) {
-      console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
-      res({err: "Unable to find peer dependencies. Check logs for additional infos."})
-      return
-    }
-
-
-    
-
-    
-    let conf = {appDest, nginxDest, domain: q.domain, name: q.commit.repo, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
-
-    function updateClient(msg) {
-      ws.send({log: msg})
-    }
-
-    try {
-      await createAppConf(conf, updateClient)
-      await createNginxConf(conf, updateClient)
-      res({log: "Done"})
-      console.log("Done")
-    } catch (e) {
-      res({err: e.message})
-      console.log("Error: " + e.message)
-      console.log("Cmd: " + e.cmd)
-      console.log("Stderr: " + e.stderr)
-    }
-
-    
-    
-    
-
-
-
-
-  }
-  catch(e) {
-    console.log("Unexpected error in /try call: ", e)
-  }
+  
 
   
 })

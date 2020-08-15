@@ -126,21 +126,20 @@ const gui = (() => {
 })()
 
 
-let id
-ws.addEventListener("message", (msg) => {
-  if (msg.log !== undefined) gui.log(msg)
-  else if (msg.init !== undefined) id = msg.init.id
-  
-})
-
-
-
 let subdomains = location.host.split(".").reverse()
 let overshoot = subdomains.splice(0, 3);
 
 gui.log(`View any version of any repository by going to <i>[version].[repo].${overshoot.reverse().join(".")}</i>`);
 
-(async () => {
+
+ws.addEventListener("message", async (msg) => {
+  if (msg.log) gui.log(msg)
+  else if (msg.err) gui.err(msg)
+});
+
+
+
+ws.addEventListener("open", async () => {
   let hash
   let repo
   let domain
@@ -163,21 +162,12 @@ gui.log(`View any version of any repository by going to <i>[version].[repo].${ov
     hash = subdomains[1]
   }
 
-  let res = await (await fetch("/try/", {
-    headers: new Headers({'Content-Type': 'application/json'}),
-    method: "post",
-    body: JSON.stringify({
-      id,
-      commit: {
-        repo,
-        hash
-      },
-      domain
-    })
-  })).json()
-  
+  ws.send({try: {
+    commit: {
+      repo,
+      hash
+    },
+    domain
+  }})
 
-  if (res.err) gui.err(res.err)
-  else gui.log(res.log)   // Done! (Updates received via ws)
-
-})()
+})
