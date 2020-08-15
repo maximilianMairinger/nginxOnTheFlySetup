@@ -1,4 +1,4 @@
-const ws = new WebSocket("ws://any.maximilian.mairinger.com/ws/")
+const ws = new WebSocket("ws://" + location.host)
 
 
 
@@ -178,6 +178,6 @@ gui.log(`View any version of any repository by going to <i>[version].[repo].${ov
   
 
   if (res.err) gui.err(res.err)
-  else gui.log(res.log)   // Done (Updates received via ws)
+  else gui.log(res.log)   // Done! (Updates received via ws)
 
 })()

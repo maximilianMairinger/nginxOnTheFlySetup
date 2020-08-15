@@ -1,7 +1,7 @@
 const express = require("express")
 const bodyParser = require("body-parser")
 const app = express()
-const WebSocket = require('ws');
+const expressWs = require('express-ws');
 const args = require("yargs").argv
 const port = args.port !== undefined ? args.port : 4400
 const shell = require("shelljs")
@@ -10,6 +10,7 @@ const path = require("path")
 const { promises: fs } = require("fs")
 const detectPort = require("detect-port")
 const sanitizeFilename = require("sanitize-filename")
+const delay = require("delay")
 
 // config
 const appDest = "/var/www/html"
@@ -17,18 +18,17 @@ const nginxDest = "/etc/nginx"
 const githubUsername = "maximilianMairinger"
 const startPort = 5000
 
-
+let wsApp = expressWs(app)
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-
-const wss = new WebSocket.Server({ port: port+1 });
 let wsLs = []
-wss.on('connection', (ws) => {
+app.ws("/", (ws) => {
   wsLs.push(ws)
   ws.send({init: {id: wsLs.length}})
 })
+
 
 app.use(express.static('public'))
 
@@ -46,7 +46,14 @@ app.use(express.static('public'))
 */
 app.post("/try", async ({body: q}, res) => {
   try {
+    
+    await delay(1000)
+    let ws = wsLs[q.id]
+    ws.send({log: "Working..."})
+    await delay(1000)
+    ws.send({log: "YEAAAA"})
 
+    throw new Error("testing")
     let old = q.commit.repo
     q.commit.repo = sanitizeFilename(old)
     if (old !== q.commit.repo) {
