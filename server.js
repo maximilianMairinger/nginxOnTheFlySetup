@@ -57,11 +57,11 @@ app.ws("/", (ws) => {
 
         let hashesOri = await fs.readdir(path.join(appDest, oriProjectName))
         if (hashesOri.includes(q.commit.hash)) {
-          err(`Go away! :c`)
+          err(`Go away! :C`)
           return
         }
 
-        await fs.mkdir(appDest, oriProjectName, q.commit.hash)
+        await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
     
     
         if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
