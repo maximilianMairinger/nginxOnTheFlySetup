@@ -134,8 +134,8 @@ gui.log(`View any version of any repository by going to <i>[version].[repo].${ov
 
 ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
-  if (msg.log) gui.log(msg)
-  else if (msg.err) gui.err(msg)
+  if (msg.log) gui.log(msg.log)
+  else if (msg.err) gui.err(msg.err)
 });
 
 
