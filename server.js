@@ -32,7 +32,7 @@ app.ws("/", (ws) => {
   }
 
 
-  ws.on("message", (mes) => {
+  ws.on("message", async (mes) => {
     if (mes.try) {
       let q = mes.try
 
