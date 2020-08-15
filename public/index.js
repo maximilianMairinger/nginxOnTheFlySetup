@@ -132,7 +132,7 @@ let overshoot = subdomains.splice(0, 3);
 gui.log(`View any version of any repository by going to <i>[version].[repo].${overshoot.reverse().join(".")}</i>`);
 
 
-ws.addEventListener("message", async (msg) => {
+ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
   if (msg.log) gui.log(msg)
   else if (msg.err) gui.err(msg)
