@@ -40,12 +40,6 @@ app.ws("/", (ws) => {
 
       try {
     
-        await delay(1000)
-        log("Working...")
-        await delay(1000)
-        log("YAS")
-    
-        throw new Error("testing")
         let old = q.commit.repo
         q.commit.repo = sanitizeFilename(old)
         if (old !== q.commit.repo) {
@@ -79,14 +73,8 @@ app.ws("/", (ws) => {
     
         if (!q.domain.endsWidth(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
         q.domain = slugify(q.domain.toLowerCase())
-    
-    
         
-        // let ws = wsLs[q.id]
-    
-    
-    
-    
+
         let createAppConf
         let createNginxConf
         try {
