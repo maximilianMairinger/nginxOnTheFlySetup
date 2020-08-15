@@ -67,7 +67,7 @@ app.ws("/", (ws) => {
         if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
     
     
-        if (!q.domain.endsWidth(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
+        if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
         q.domain = slugify(q.domain.toLowerCase())
         
 
