@@ -1,4 +1,4 @@
-const ws = new WebSocket("ws://ws-nginx-on-the-fly.maximilian.mairinger.com")
+const ws = new WebSocket("ws://any.maximilian.mairinger.com/ws/")
 
 
 
@@ -163,7 +163,7 @@ gui.log(`View any version of any repository by going to <i>[version].[repo].${ov
     hash = subdomains[1]
   }
 
-  let res = await (await fetch("/try", {
+  let res = await (await fetch("/try/", {
     headers: new Headers({'Content-Type': 'application/json'}),
     method: "post",
     body: JSON.stringify({
