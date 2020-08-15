@@ -33,7 +33,7 @@ app.ws("/", (ws) => {
 
 
   ws.on("message", async (mes) => {
-    console.log("mes", mes)
+    console.log("mes", JSON.stringify(mes, undefined, "  "))
     if (mes.try) {
       let q = mes.try
 
