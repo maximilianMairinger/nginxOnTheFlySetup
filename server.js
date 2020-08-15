@@ -32,10 +32,10 @@ app.ws("/", (ws) => {
   }
 
 
-  ws.on("message", async (mes) => {
+  ws.on("message", async (msg) => {
     msg = JSON.parse(msg)
-    if (mes.try) {
-      let q = mes.try
+    if (msg.try) {
+      let q = msg.try
 
 
       try {
