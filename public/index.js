@@ -1,4 +1,4 @@
-const ws = new WebSocket("ws://ws-nginx-on-the-fly.maximilian.mairinger.com/")
+const ws = new WebSocket("ws://ws-nginx-on-the-fly.maximilian.mairinger.com")
 
 
 
