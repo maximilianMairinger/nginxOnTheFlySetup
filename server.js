@@ -10,6 +10,7 @@ const path = require("path")
 const { promises: fs } = require("fs")
 const detectPort = require("detect-port")
 const delay = require("delay")
+const del = require("del")
 
 // config
 const appDest = "/var/www/html"
@@ -64,44 +65,51 @@ app.ws("/", (ws) => {
         await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
     
     
-        if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
-    
-    
-        if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
-        q.domain = slugify(q.domain.toLowerCase())
-        
-
-        let createAppConf
-        let createNginxConf
         try {
-          let o = require("./../nginxCdSetup/dist/nginxCdSetup.js")
-          createAppConf = o.createAppConf
-          createNginxConf = o.createNginxConf
+          if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
+    
+    
+          if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
+          q.domain = slugify(q.domain.toLowerCase())
+          
+  
+          let createAppConf
+          let createNginxConf
+          try {
+            let o = require("./../nginxCdSetup/dist/nginxCdSetup.js")
+            createAppConf = o.createAppConf
+            createNginxConf = o.createNginxConf
+          }
+          catch(e) {
+            console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
+            err("Unable to find peer dependencies. Check logs for additional infos.")
+            return
+          }
+      
+      
+          
+      
+          
+          let conf = {appDest, nginxDest, domain: q.domain, name: q.commit.repo, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
+      
+          
+      
+          try {
+            await createAppConf(conf, log)
+            await createNginxConf(conf, log)
+            log("Done")
+            console.log("Done")
+          } catch (e) {
+            err(e.message)
+            console.log("Error: " + e.message)
+            console.log("Cmd: " + e.cmd)
+            console.log("Stderr: " + e.stderr)
+          }
         }
         catch(e) {
-          console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
-          err("Unable to find peer dependencies. Check logs for additional infos.")
-          return
-        }
-    
-    
-        
-    
-        
-        let conf = {appDest, nginxDest, domain: q.domain, name: q.commit.repo, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
-    
-        
-    
-        try {
-          await createAppConf(conf, log)
-          await createNginxConf(conf, log)
-          log("Done")
-          console.log("Done")
-        } catch (e) {
-          err(e.message)
-          console.log("Error: " + e.message)
-          console.log("Cmd: " + e.cmd)
-          console.log("Stderr: " + e.stderr)
+          console.log("Late unexpected failure, removing potentially corrupted folder: ", path.join(appDest, oriProjectName, q.commit.hash, "**"))
+          await del(path.join(appDest, oriProjectName, q.commit.hash, "**"))
+          throw e
         }
     
         
