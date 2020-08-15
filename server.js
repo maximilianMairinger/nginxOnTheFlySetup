@@ -9,7 +9,6 @@ const slugify = require("slugify")
 const path = require("path")
 const { promises: fs } = require("fs")
 const detectPort = require("detect-port")
-const sanitizeFilename = require("sanitize-filename")
 const delay = require("delay")
 
 // config
@@ -39,33 +38,37 @@ app.ws("/", (ws) => {
 
 
       try {
-    
-        let old = q.commit.repo
-        q.commit.repo = sanitizeFilename(old)
-        if (old !== q.commit.repo) {
-          err("Go away! :c")
-          return
-        }
-        old = undefined
-    
-        let repoPath = path.join(appDest, q.commit.repo)
-        try {
-          await fs.access(repoPath)
-        }
-        catch(e) {
+
+        
+        let projectsOri = await fs.readdir(appDest)
+        let projectsLowerCase = []
+        projectsOri.forEach((e) => {
+          projectsLowerCase.push(e.toLowerCase())
+        })
+        let repoLower = q.commit.repo.toLowerCase()
+        let projectNameFindIndex = projectsLowerCase.indexOf(repoLower)
+        if (projectNameFindIndex === -1) {
           err(`${q.commit.repo} is not an active repository.`)
           return
         }
-    
-        let hashPath = path.join(repoPath, q.commit.hash)
-        try {
-          await fs.access(hashPath)
-        }
-        catch(e) {
+                
+        let oriProjectName = projectsOri[projectNameFindIndex]
+
+
+        let hashesOri = await fs.readdir(path.join(appDest, oriProjectName))
+        let hashesLowerCase = []
+        hashesOri.forEach((e) => {
+          hashesLowerCase.push(e.toLowerCase())
+        })
+        let hashLower = q.commit.hash.toLowerCase()
+        let hashFindIndex = hashesLowerCase.indexOf(hashLower)
+        if (hashFindIndex === -1) {
           err(`Go away! :c`)
           return
         }
-        await fs.mkdir(hashPath)
+        let hashOri = hashesOri[hashFindIndex]
+
+        await fs.mkdir(appDest, oriProjectName, hashOri)
     
     
         if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
