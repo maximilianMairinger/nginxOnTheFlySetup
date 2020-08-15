@@ -25,15 +25,15 @@ app.use(bodyParser.json());
 
 app.ws("/", (ws) => {
   function log(msg) {
-    ws.send({log: msg})
+    ws.send(JSON.stringify({log: msg}))
   }
   function err(msg) {
-    ws.send({err: msg})
+    ws.send(JSON.stringify({err: msg}))
   }
 
 
   ws.on("message", async (mes) => {
-    console.log("mes", JSON.stringify(mes, undefined, "  "))
+    msg = JSON.parse(msg)
     if (mes.try) {
       let q = mes.try
 

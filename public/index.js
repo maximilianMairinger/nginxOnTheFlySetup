@@ -133,6 +133,7 @@ gui.log(`View any version of any repository by going to <i>[version].[repo].${ov
 
 
 ws.addEventListener("message", async (msg) => {
+  msg = JSON.parse(msg)
   if (msg.log) gui.log(msg)
   else if (msg.err) gui.err(msg)
 });
@@ -162,12 +163,12 @@ ws.addEventListener("open", async () => {
     hash = subdomains[1]
   }
 
-  ws.send({try: {
+  ws.send(JSON.stringify({try: {
     commit: {
       repo,
       hash
     },
     domain
-  }})
+  }}))
 
 })
