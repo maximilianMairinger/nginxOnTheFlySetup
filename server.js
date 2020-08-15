@@ -56,19 +56,12 @@ app.ws("/", (ws) => {
 
 
         let hashesOri = await fs.readdir(path.join(appDest, oriProjectName))
-        let hashesLowerCase = []
-        hashesOri.forEach((e) => {
-          hashesLowerCase.push(e.toLowerCase())
-        })
-        let hashLower = q.commit.hash.toLowerCase()
-        let hashFindIndex = hashesLowerCase.indexOf(hashLower)
-        if (hashFindIndex === -1) {
+        if (hashesOri.includes(q.commit.hash)) {
           err(`Go away! :c`)
           return
         }
-        let hashOri = hashesOri[hashFindIndex]
 
-        await fs.mkdir(appDest, oriProjectName, hashOri)
+        await fs.mkdir(appDest, oriProjectName, q.commit.hash)
     
     
         if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
