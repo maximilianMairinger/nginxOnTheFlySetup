@@ -117,7 +117,14 @@ app.ws("/", (ws) => {
       
           try {
             await createAppConf(conf, log)
-            await createNginxConf(conf, log)
+            try {
+              await createNginxConf(conf, log)
+            }
+            catch(e) {
+              console.log("Failure after pm2 start! Cleanup: Killing processes.")
+              $(`cd ${conf.dir} && pm2 del ecosystem.config.js`, `Filed to cleanup process`)
+              throw e
+            }
             log("Done")
             console.log("Done")
           } catch (e) {
