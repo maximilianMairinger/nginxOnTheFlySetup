@@ -106,12 +106,12 @@ app.ws("/", (ws) => {
             console.log("Stderr: " + e.stderr)
             console.log("-----")
             console.log("Late failure, removing potentially corrupted folder: ", path.join(appDest, oriProjectName, q.commit.hash))
-            await del(path.join(appDest, oriProjectName, q.commit.hash))
+            await del(path.join(appDest, oriProjectName, q.commit.hash), {force: true})
           }
         }
         catch(e) {
           console.log("Late unexpected failure, removing potentially corrupted folder: ", path.join(appDest, oriProjectName, q.commit.hash))
-          await del(path.join(appDest, oriProjectName, q.commit.hash))
+          await del(path.join(appDest, oriProjectName, q.commit.hash), {force: true})
           throw e
         }
     
