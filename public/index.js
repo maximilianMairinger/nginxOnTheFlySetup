@@ -7,7 +7,7 @@ const gui = (() => {
   }
   let titleElem = document.querySelector("title")
   function setTitle(html) {
-    titleElem.innerText(stripHTML(html))
+    titleElem.innerText = stripHTML(html)
   }
 
 
