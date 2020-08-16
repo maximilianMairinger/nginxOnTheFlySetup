@@ -24,7 +24,7 @@ const gui = (() => {
 
   function log(msg, type) {
     msg = saniHTML(msg)
-    if (onAnyLog) onAnyLog()
+    if (onAnyLog) onAnyLog(type)
     let div = document.createElement("div")
     div.classList.add("message")
     if (type) div.classList.add(type)
@@ -48,9 +48,10 @@ const gui = (() => {
         }
       }, 333.4)
 
-      onAnyLog = () => {
+      onAnyLog = (type) => {
         clearInterval(interval)
-        div.innerHTML = msgWithoutDots + "... Done!"
+        if (type === "err") div.innerHTML = msgWithoutDots + "... Error!"
+        else div.innerHTML = msgWithoutDots + "... Done!"
         onAnyLog = undefined
       }
 
@@ -66,7 +67,7 @@ const gui = (() => {
   let id = 0
   function inq(question, options = {}) {
     return new Promise((res) => {
-      if (onAnyLog) onAnyLog()
+      if (onAnyLog) onAnyLog("inq")
       if (!(question.endsWith("?") || question.endsWith(":")) && !options.nonoPostFix) question = question + ":"
       apd(`<div class="message">${saniHTML(question)}</div><input id="inp${id}" type="${options.type}" autocomplete="off"><br><br>`)
       let inputElem = document.getElementById("inp" + id)
