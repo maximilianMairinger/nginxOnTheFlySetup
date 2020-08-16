@@ -111,7 +111,7 @@ app.ws("/", (ws) => {
           
       
           
-          let conf = {appDest, nginxDest, domain: q.domain, name: q.commit.repo, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
+          let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
       
           
       
