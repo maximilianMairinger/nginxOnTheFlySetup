@@ -123,10 +123,12 @@ const gui = (() => {
           else {
             lastFineText = inputElem.value
             inputElem.style.color = ""
-            setTitle(question + " " + inputElem.value)
           }
         })  
       }
+      inputElem.addEventListener("input", () => {
+        setTitle(question + " " + inputElem.value)
+      })
       id++
     })
 
