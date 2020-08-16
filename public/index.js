@@ -3,7 +3,7 @@ const ws = new WebSocket("ws://" + location.host)
 
 const gui = (() => {
   function stripHTML(html) {
-    return sanitizeHtml(html)
+    return sanitizeHtml(html, {})
   }
   let titleElem = document.querySelector("title")
   function setTitle(html) {
