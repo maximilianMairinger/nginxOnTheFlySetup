@@ -6,9 +6,14 @@ const ws = new WebSocket("ws://" + location.host)
 const gui = (() => {
   function saniHTML(html) {
     return sanitizeHtml(Autolinker.link(html), {
-      allowedTags: [ 'b', 'i', 'em', 'strong', 'a' ],
+      allowedTags: [ 'b', 'i', 'em', 'strong', 'a', "span" ],
       allowedAttributes: {
-        'a': [ 'href', "target" ]
+        'a': [ 'href', "target", "title" ],
+        'span': [ "title" ],
+        "b": [ "title" ],
+        "i": [ "title" ],
+        "em": [ "title" ],
+        "strong": [ "title" ],
       },
       disallowedTagsMode: "escape",
     })
