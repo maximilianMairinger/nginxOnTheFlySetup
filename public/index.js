@@ -135,7 +135,7 @@ const gui = (() => {
 let subdomains = location.host.split(".").reverse()
 let overshoot = subdomains.splice(0, 3);
 
-gui.log(`View any version of any repository by going to <i>[version].[repo].${overshoot.reverse().join(".")}</i>`);
+gui.log(`View any version of any repository by going to <i><a href="[version].[repo].${overshoot.reverse().join(".")}">[version].[repo].${overshoot.reverse().join(".")}</a></i>`);
 
 
 ws.addEventListener("message", async ({data: msg}) => {
