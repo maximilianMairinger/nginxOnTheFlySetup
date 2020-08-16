@@ -84,9 +84,6 @@ app.ws("/", (ws) => {
 
         
         await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
-        console.log("mkdir", path.join(appDest, oriProjectName, q.commit.hash))
-        shell(`cd ${path.join(appDest, oriProjectName, q.commit.hash)}`)
-        console.log("Done cd")
     
     
         try {
