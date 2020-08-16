@@ -56,6 +56,7 @@ const gui = (() => {
         }
         msg = msgWithoutDots + dots
         div.innerHTML = msg
+        setTitle(msg)
 
         if (currentDots >= 3) {
           currentDots = 0
@@ -122,6 +123,7 @@ const gui = (() => {
           else {
             lastFineText = inputElem.value
             inputElem.style.color = ""
+            setTitle(question + " " + inputElem.value)
           }
         })  
       }
@@ -162,6 +164,7 @@ ws.addEventListener("message", async ({data: msg}) => {
   }
   else if (msg.err) {
     if (msg.err === "NOT_ACTIVE") {
+      gui.err("Unable to find " + lastAskRepoName + " in active repository registry.")
       let o = await askName()
       sendTry(o)
     }
@@ -201,6 +204,8 @@ ws.addEventListener("open", async () => {
   sendTry(o)
 })
 
+let lastAskRepoName
 function sendTry(o) {
+  lastAskRepoName = o.repo
   return ws.send(JSON.stringify({try: o}))
 }
