@@ -4,7 +4,7 @@ const app = express()
 const expressWs = require('express-ws');
 const args = require("yargs").argv
 const port = args.port !== undefined ? args.port : 4400
-const shell = require("shelljs")
+const shelljs = require("shelljs")
 const slugify = require("slugify")
 const path = require("path")
 const { promises: fs } = require("fs")
@@ -16,7 +16,27 @@ const del = require("del")
 const appDest = "/var/www/html"
 const nginxDest = "/etc/nginx"
 const githubUsername = "maximilianMairinger"
-const startPort = 5000
+const startPort = 5000;
+
+
+
+const shell = (() => {
+  function shell(cmd, errorMsg = "An unknown error occurred") {
+    let q = shelljs.exec(cmd)
+    if (q.code !== 0) throw new ShellError(errorMsg, q.stderr, cmd)
+    return q.stdout
+  }
+  shell.ShellError = class ShellError extends Error {
+    constructor(msg, stderr, cmd) {
+      super(msg)
+      this.stderr = stderr
+      this.cmd = cmd
+    }
+  }
+
+  return shell
+})()
+
 
 let wsApp = expressWs(app)
 
@@ -65,6 +85,8 @@ app.ws("/", (ws) => {
         
         await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
         console.log("mkdir", path.join(appDest, oriProjectName, q.commit.hash))
+        shell(`cd ${path.join(appDest, oriProjectName, q.commit.hash)}`)
+        console.log("Done cd")
     
     
         try {
