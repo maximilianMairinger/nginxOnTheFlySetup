@@ -208,6 +208,7 @@ ws.addEventListener("open", async () => {
 
 let lastAskRepoName
 function sendTry(o) {
+  console.log("sendTry", o)
   lastAskRepoName = o.repo
   return ws.send(JSON.stringify({try: o}))
 }
