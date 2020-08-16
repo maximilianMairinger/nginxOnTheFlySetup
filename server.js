@@ -39,7 +39,7 @@ app.ws("/", (ws) => {
 
 
       try {
-
+        log("Setting up environment...")
         
         let projectsOri = await fs.readdir(appDest)
         let projectsLowerCase = []
@@ -62,6 +62,7 @@ app.ws("/", (ws) => {
           return
         }
 
+        
         await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
     
     
