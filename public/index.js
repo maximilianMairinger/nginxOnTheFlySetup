@@ -3,7 +3,7 @@ const ws = new WebSocket("ws://" + location.host)
 
 const gui = (() => {
   function stripHTML(html) {
-    return sanitizeHtml(html, {})
+    return sanitizeHtml(html, {allowedTags: []})
   }
   let titleElem = document.querySelector("title")
   function setTitle(html) {
@@ -150,7 +150,13 @@ gui.log(`View any version of any repository by going to <i><a href="[version].[r
 
 ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
-  if (msg.log) gui.log(msg.log)
+  if (msg.log) {
+    if (msg.log.toLowerCase() === "done") msg.log = "Done! Reloading shortly..."
+    gui.log(msg.log)
+    setTimeout(() => {
+      location.reload()
+    }, 2000)
+  }
   else if (msg.err) gui.err(msg.err)
 });
 
