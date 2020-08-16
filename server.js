@@ -69,7 +69,7 @@ app.ws("/", (ws) => {
         let repoLower = q.commit.repo.toLowerCase()
         let projectNameFindIndex = projectsLowerCase.indexOf(repoLower)
         if (projectNameFindIndex === -1) {
-          err(`${q.commit.repo} is not an active repository.`)
+          err(`NOT_ACTIVE`)
           return
         }
                 

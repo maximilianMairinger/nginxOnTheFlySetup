@@ -160,40 +160,47 @@ ws.addEventListener("message", async ({data: msg}) => {
     gui.log(msg.log)
     
   }
-  else if (msg.err) gui.err(msg.err)
+  else if (msg.err) {
+    if (msg.err === "NOT_ACTIVE") {
+      let o = await askName()
+      sendTry(o)
+    }
+    else gui.err(msg.err)
+  }
 });
 
+async function askName() {
+  let repo, hash, domain
+  gui.log(`You may link a repo under this alias <i>${location.host}</i>!`)
+  let r = await gui.ask(`Repository`)
+  if (r.includes("@")) {
+    let split = r.split("@")
+    repo = split[0]
+    hash = split[1]
+  }
+  else {
+    repo = r
+    hash = await gui.ask(`Commit hash`)
+  }
+  domain = location.host
+
+  return {repo, hash, domain}
+}
 
 
 ws.addEventListener("open", async () => {
-  let hash
-  let repo
-  let domain
+  let o = {}
   if (subdomains.length < 2 || subdomains.length > 2) {
-    gui.log(`You may link a repo under this alias <i>${location.host}</i>!`)
-    let r = await gui.ask(`Repository`)
-    if (r.includes("@")) {
-      let split = r.split("@")
-      repo = split[0]
-      hash = split[1]
-    }
-    else {
-      repo = r
-      hash = await gui.ask(`Commit hash`)
-    }
-    domain = location.host
+    o = await askName()
   }
   else {
-    repo = subdomains[0]
-    hash = subdomains[1]
+    o.repo = subdomains[0]
+    o.hash = subdomains[1]
   }
 
-  ws.send(JSON.stringify({try: {
-    commit: {
-      repo,
-      hash
-    },
-    domain
-  }}))
-
+  sendTry(o)
 })
+
+function sendTry(o) {
+  return ws.send(JSON.stringify({try: o}))
+}
