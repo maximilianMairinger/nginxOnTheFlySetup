@@ -189,18 +189,22 @@ async function askName() {
   }
   domain = location.host
 
-  return {repo, hash, domain}
+  return {commit: {repo, hash}, domain}
 }
 
 
 ws.addEventListener("open", async () => {
-  let o = {}
+  let o
   if (subdomains.length < 2 || subdomains.length > 2) {
     o = await askName()
   }
   else {
-    o.repo = subdomains[0]
-    o.hash = subdomains[1]
+    o = {
+      commit: {
+        repo: subdomains[0],
+        hash: subdomains[1]
+      }
+    }
   }
 
   sendTry(o)
