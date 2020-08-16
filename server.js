@@ -104,6 +104,9 @@ app.ws("/", (ws) => {
             console.log("Error: " + e.message)
             console.log("Cmd: " + e.cmd)
             console.log("Stderr: " + e.stderr)
+            console.log("-----")
+            console.log("Late failure, removing potentially corrupted folder: ", path.join(appDest, oriProjectName, q.commit.hash, "**"))
+            await del(path.join(appDest, oriProjectName, q.commit.hash, "**"))
           }
         }
         catch(e) {
