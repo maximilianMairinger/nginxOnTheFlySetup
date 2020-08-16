@@ -1,9 +1,17 @@
 const ws = new WebSocket("ws://" + location.host)
 
 
-
-
 const gui = (() => {
+  function stripHTML(html) {
+    return sanitizeHtml(html)
+  }
+  let titleElem = document.querySelector("title")
+  function setTitle(html) {
+    titleElem.innerText(stripHTML(html))
+  }
+
+
+
   function saniHTML(html) {
     return sanitizeHtml(Autolinker.link(html), {
       allowedTags: [ 'b', 'i', 'em', 'strong', 'a', "span" ],
@@ -28,6 +36,7 @@ const gui = (() => {
   let onAnyLog
 
   function log(msg, type) {
+    setTitle(msg)
     msg = saniHTML(msg)
     if (onAnyLog) onAnyLog(type)
     let div = document.createElement("div")
@@ -72,6 +81,7 @@ const gui = (() => {
   let id = 0
   function inq(question, options = {}) {
     return new Promise((res) => {
+      setTitle(question)
       if (onAnyLog) onAnyLog("inq")
       if (!(question.endsWith("?") || question.endsWith(":")) && !options.nonoPostFix) question = question + ":"
       apd(`<div class="message">${saniHTML(question)}</div><input id="inp${id}" type="${options.type}" autocomplete="off"><br><br>`)
