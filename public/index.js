@@ -42,13 +42,14 @@ const gui = (() => {
     let div = document.createElement("div")
     div.classList.add("message")
     if (type) div.classList.add(type)
+    let interval
     
     function messageAllocation() {
       if (msg.endsWith("...")) {
         let currentDots = 1
         let msgWithoutDots = msg.substring(0, msg.length - 3)
         msg = msgWithoutDots + "."
-        let interval = setInterval(() => {
+        interval = setInterval(() => {
           currentDots++
   
           let dots = ""
@@ -86,7 +87,7 @@ const gui = (() => {
     return function update(msg) {
       setTitle(msg)
       msg = saniHTML(msg)
-      clearInterval(interval)
+      if (interval) clearInterval(interval)
       messageAllocation()
       return update
     }
@@ -179,7 +180,7 @@ ws.addEventListener("message", async ({data: msg}) => {
       let lastTime = Date.now()
       let f = () => {
         requestAnimationFrame(f)
-        
+
         let curTime = Date.now()
         let timeDelta = curTime - lastTime
         timer -= timeDelta
