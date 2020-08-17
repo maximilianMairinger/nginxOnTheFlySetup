@@ -44,7 +44,7 @@ const gui = (() => {
     if (type) div.classList.add(type)
     let interval
     
-    function messageAllocation() {
+    function messageAllocation(msg) {
       if (msg.endsWith("...")) {
         let currentDots = 1
         let msgWithoutDots = msg.substring(0, msg.length - 3)
@@ -79,7 +79,7 @@ const gui = (() => {
       console.log("set", msg)
       div.innerHTML = msg
     }
-    messageAllocation()
+    messageAllocation(msg)
 
     
     apd(div)
@@ -89,7 +89,7 @@ const gui = (() => {
       setTitle(msg)
       msg = saniHTML(msg)
       if (interval) clearInterval(interval)
-      messageAllocation()
+      messageAllocation(msg)
       return update
     }
   }
@@ -173,7 +173,7 @@ ws.addEventListener("message", async ({data: msg}) => {
     if (msg.log.toLowerCase() === "done") {
       
       gui.log("Done")
-      let timer = 4000
+      let timer = 10000
       // setTimeout(() => {
       //   location.reload()
       // }, timer)
@@ -187,7 +187,6 @@ ws.addEventListener("message", async ({data: msg}) => {
         let timeDelta = curTime - lastTime
         timer -= timeDelta
 
-        console.log("timer", timer)
         updateReloading("Reloading in " + timer)
 
         lastTime = curTime
