@@ -107,9 +107,9 @@ app.ws("/", (ws) => {
               return
             }
             
-
+            config = config.trimLeft().toLowerCase()
             const begin = "upstream nodejs_upstream_"
-            if (!config.trimLeft().toLowerCase().startsWith(begin)) {
+            if (!config.startsWith(begin)) {
               err(`Unable to parse config, alias creation failed`)
               console.log(`Unable to parse config, alias creation failed. Wrong beginning`)
             }
