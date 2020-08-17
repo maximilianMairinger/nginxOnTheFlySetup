@@ -176,7 +176,6 @@ ws.addEventListener("message", async ({data: msg}) => {
       let timer = 3000
       let updateReloading = gui.log("Reloading in " + timer)
       
-      let timer = 3000
       let lastTime = Date.now()
       requestAnimationFrame(() => {
         let curTime = Date.now()
