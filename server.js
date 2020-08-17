@@ -120,7 +120,7 @@ app.ws("/", (ws) => {
                 console.log(`Unable to parse config, alias creation failed. Unable to parse port`)
               }
               else {
-                let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port, githubUsername}
+                let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port, githubUsername, justAlias: true}
                 try {
                   await createNginxConf(conf, log)
                 }
