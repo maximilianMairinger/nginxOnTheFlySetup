@@ -156,10 +156,12 @@ ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
   if (msg.log) {
     if (msg.log.toLowerCase() === "done") {
-      msg.log = "Done! Reloading shortly..."
       setTimeout(() => {
         location.reload()
-      }, 2000)
+      }, 3000)
+      gui.log("Done")
+      gui.log("Reloading shortly...")
+      return
     }
     gui.log(msg.log)
     
