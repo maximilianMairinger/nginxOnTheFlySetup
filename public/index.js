@@ -76,6 +76,7 @@ const gui = (() => {
       else if (!(msg.endsWith(".") || msg.endsWith("!") || msg.endsWith("?"))) {
         msg = msg + "."
       }
+      console.log("set", msg)
       div.innerHTML = msg
     }
     messageAllocation()
@@ -170,11 +171,12 @@ ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
   if (msg.log) {
     if (msg.log.toLowerCase() === "done") {
-      setTimeout(() => {
-        location.reload()
-      }, 3000)
+      
       gui.log("Done")
-      let timer = 3000
+      let timer = 4000
+      // setTimeout(() => {
+      //   location.reload()
+      // }, timer)
       let updateReloading = gui.log("Reloading in " + timer)
       
       let lastTime = Date.now()
@@ -185,6 +187,7 @@ ws.addEventListener("message", async ({data: msg}) => {
         let timeDelta = curTime - lastTime
         timer -= timeDelta
 
+        console.log("timer", timer)
         updateReloading("Reloading in " + timer)
 
         lastTime = curTime
