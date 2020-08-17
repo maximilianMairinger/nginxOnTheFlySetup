@@ -213,6 +213,6 @@ ws.addEventListener("open", async () => {
 let lastAskRepoName
 function sendTry(o) {
   console.log("sendTry", o)
-  lastAskRepoName = o.repo
+  lastAskRepoName = o.commit.repo
   return ws.send(JSON.stringify({try: o}))
 }
