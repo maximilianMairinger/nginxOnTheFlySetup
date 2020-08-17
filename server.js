@@ -122,7 +122,9 @@ app.ws("/", (ws) => {
               else {
                 let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port, githubUsername, justAlias: true}
                 try {
-                  await createNginxConf(conf, log)
+                  await createNginxConf(conf, log, err)
+                  gui.log("Done")
+                  console.log("Done")
                 }
                 catch(e) {
                   err(e.message)
@@ -131,6 +133,8 @@ app.ws("/", (ws) => {
                   console.log("Stderr: " + e.stderr)
                   console.log("----")
                 }
+
+                
                 
 
               }
@@ -158,9 +162,9 @@ app.ws("/", (ws) => {
           
       
         try {
-          await createAppConf(conf, log)
+          await createAppConf(conf, log, err)
           try {
-            await createNginxConf(conf, log)
+            await createNginxConf(conf, log, err)
           }
           catch(e) {
             console.log("Failure after pm2 start! Cleanup: Killing processes.")
