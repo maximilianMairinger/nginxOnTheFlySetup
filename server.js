@@ -123,7 +123,7 @@ app.ws("/", (ws) => {
                 let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port, githubUsername, justAlias: true}
                 try {
                   await createNginxConf(conf, log, err)
-                  gui.log("Done")
+                  log("Done")
                   console.log("Done")
                 }
                 catch(e) {
@@ -216,11 +216,6 @@ app.use(express.static('public'))
   domain?: string
 }
 */
-app.post("/try", async ({body: q}, res) => {
-  
-
-  
-})
 
 
 
