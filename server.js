@@ -75,73 +75,96 @@ app.ws("/", (ws) => {
                 
         let oriProjectName = projectsOri[projectNameFindIndex]
 
+        let createAppConf
+        let createNginxConf
+        try {
+          let o = require("./../nginxCdSetup/dist/nginxCdSetup.js")
+          createAppConf = o.createAppConf
+          createNginxConf = o.createNginxConf
+        }
+        catch(e) {
+          console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
+          err("Unable to find peer dependencies. Check logs for additional infos.")
+          return
+        }
+
 
         let hashesOri = await fs.readdir(path.join(appDest, oriProjectName))
         if (hashesOri.includes(q.commit.hash)) {
-          err(`Go away! :C`)
-          return
+          if (!q.domain) {
+            err(`Go away! :C`)
+            return
+          }
+          else {
+            // make alias
+            let config = (await fs.readFile(path.join(nginxDest, "sites-available", `${q.commit.hash}.${q.commit.repo}.maximilian.mairinger.com`))).toString()
+
+            const begin = "upstream nodejs_upstream_"
+            if (!config.trimLeft().toLowerCase().startsWith(begin)) err(`Unable to parse config, alias creation failed`)
+            else {
+              let port = +config.substr(begin.length, 6)
+              if (isNaN(port)) err(`Unable to parse config, alias creation failed`)
+              else {
+                let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port, githubUsername}
+                try {
+                  await createNginxConf(conf, log)
+                }
+                catch(e) {
+                  err(e.message)
+                  console.log("Error: " + e.message)
+                  console.log("Cmd: " + e.cmd)
+                  console.log("Stderr: " + e.stderr)
+                  console.log("----")
+                }
+                
+
+              }
+            }
+            
+
+            return
+          }
         }
 
         
         await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
     
     
-        try {
-          if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
-    
-    
-          if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
-          q.domain = slugify(q.domain.toLowerCase())
-          
+        if (!q.domain) q.domain = q.commit.hash + "." + q.commit.repo
   
-          let createAppConf
-          let createNginxConf
+  
+        if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
+        q.domain = slugify(q.domain.toLowerCase())
+
+    
+        
+        let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
+      
+          
+      
+        try {
+          await createAppConf(conf, log)
           try {
-            let o = require("./../nginxCdSetup/dist/nginxCdSetup.js")
-            createAppConf = o.createAppConf
-            createNginxConf = o.createNginxConf
+            await createNginxConf(conf, log)
           }
           catch(e) {
-            console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
-            err("Unable to find peer dependencies. Check logs for additional infos.")
-            return
+            console.log("Failure after pm2 start! Cleanup: Killing processes.")
+            $(`cd ${conf.dir} && pm2 del ecosystem.config.js`, `Filed to cleanup process`)
+            throw e
           }
-      
-      
-          
-      
-          
-          let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
-      
-          
-      
-          try {
-            await createAppConf(conf, log)
-            try {
-              await createNginxConf(conf, log)
-            }
-            catch(e) {
-              console.log("Failure after pm2 start! Cleanup: Killing processes.")
-              $(`cd ${conf.dir} && pm2 del ecosystem.config.js`, `Filed to cleanup process`)
-              throw e
-            }
-            log("Done")
-            console.log("Done")
-          } catch (e) {
-            err(e.message)
-            console.log("Error: " + e.message)
-            console.log("Cmd: " + e.cmd)
-            console.log("Stderr: " + e.stderr)
-            console.log("-----")
-            console.log("Late failure, removing potentially corrupted folder: ", path.join(appDest, oriProjectName, q.commit.hash))
-            await del(path.join(appDest, oriProjectName, q.commit.hash), {force: true})
-          }
-        }
-        catch(e) {
-          console.log("Late unexpected failure, removing potentially corrupted folder: ", path.join(appDest, oriProjectName, q.commit.hash))
+          log("Done")
+          console.log("Done")
+        } catch (e) {
+          err(e.message)
+          console.log("Error: " + e.message)
+          console.log("Cmd: " + e.cmd)
+          console.log("Stderr: " + e.stderr)
+          console.log("-----")
+          console.log("Late failure, removing potentially corrupted folder: ", path.join(appDest, oriProjectName, q.commit.hash))
           await del(path.join(appDest, oriProjectName, q.commit.hash), {force: true})
-          throw e
         }
+
+
     
         
         
