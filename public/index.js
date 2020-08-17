@@ -43,40 +43,53 @@ const gui = (() => {
     div.classList.add("message")
     if (type) div.classList.add(type)
     
-    if (msg.endsWith("...")) {
-      let currentDots = 1
-      let msgWithoutDots = msg.substring(0, msg.length - 3)
-      msg = msgWithoutDots + "."
-      let interval = setInterval(() => {
-        currentDots++
-
-        let dots = ""
-        for (let i = 0; i < currentDots; i++) {
-          dots += "."
+    function messageAllocation() {
+      if (msg.endsWith("...")) {
+        let currentDots = 1
+        let msgWithoutDots = msg.substring(0, msg.length - 3)
+        msg = msgWithoutDots + "."
+        let interval = setInterval(() => {
+          currentDots++
+  
+          let dots = ""
+          for (let i = 0; i < currentDots; i++) {
+            dots += "."
+          }
+          msg = msgWithoutDots + dots
+          div.innerHTML = msg
+          setTitle(msg)
+  
+          if (currentDots >= 3) {
+            currentDots = 0
+          }
+        }, 333.4)
+  
+        onAnyLog = (type) => {
+          clearInterval(interval)
+          if (type === "err") div.innerHTML = msgWithoutDots + "... Error!"
+          else div.innerHTML = msgWithoutDots + "... Done!"
+          onAnyLog = undefined
         }
-        msg = msgWithoutDots + dots
-        div.innerHTML = msg
-        setTitle(msg)
-
-        if (currentDots >= 3) {
-          currentDots = 0
-        }
-      }, 333.4)
-
-      onAnyLog = (type) => {
-        clearInterval(interval)
-        if (type === "err") div.innerHTML = msgWithoutDots + "... Error!"
-        else div.innerHTML = msgWithoutDots + "... Done!"
-        onAnyLog = undefined
+  
       }
+      else if (!(msg.endsWith(".") || msg.endsWith("!") || msg.endsWith("?"))) {
+        msg = msg + "."
+      }
+      div.innerHTML = msg
+    }
+    messageAllocation()
 
-    }
-    else if (!(msg.endsWith(".") || msg.endsWith("!") || msg.endsWith("?"))) {
-      msg = msg + "."
-    }
-    div.innerHTML = msg
+    
     apd(div)
     apd(`<br><br>`)
+
+    return function update(msg) {
+      setTitle(msg)
+      msg = saniHTML(msg)
+      clearInterval(interval)
+      messageAllocation()
+      return update
+    }
   }
 
   let id = 0
@@ -160,7 +173,20 @@ ws.addEventListener("message", async ({data: msg}) => {
         location.reload()
       }, 3000)
       gui.log("Done")
-      gui.log("Reloading shortly...")
+      let timer = 3000
+      let updateReloading = gui.log("Reloading in " + timer)
+      
+      let timer = 3000
+      let lastTime = Date.now()
+      requestAnimationFrame(() => {
+        let curTime = Date.now()
+        let timeDelta = curTime - lastTime
+        timer -= timeDelta
+
+        updateReloading("Reloading in " + timer)
+
+        lastTime = curTime
+      })
       return
     }
     gui.log(msg.log)
