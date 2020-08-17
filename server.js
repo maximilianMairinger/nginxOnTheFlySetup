@@ -97,7 +97,16 @@ app.ws("/", (ws) => {
           }
           else {
             // make alias
-            let config = (await fs.readFile(path.join(nginxDest, "sites-available", `${q.commit.hash}.${q.commit.repo}.maximilian.mairinger.com`))).toString()
+            let config 
+            try {
+              config = (await fs.readFile(path.join(nginxDest, "sites-available", `${q.commit.hash}.${q.commit.repo}.maximilian.mairinger.com`).toLowerCase())).toString()
+            }
+            catch(e) {
+              err(`Unexpected error unable to find config file`)
+              console.log(`Unable to find`, path.join(nginxDest, "sites-available", `${q.commit.hash}.${q.commit.repo}.maximilian.mairinger.com`).toLowerCase())
+              return
+            }
+            
 
             const begin = "upstream nodejs_upstream_"
             if (!config.trimLeft().toLowerCase().startsWith(begin)) err(`Unable to parse config, alias creation failed`)
