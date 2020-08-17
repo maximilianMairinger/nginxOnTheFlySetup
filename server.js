@@ -109,10 +109,16 @@ app.ws("/", (ws) => {
             
 
             const begin = "upstream nodejs_upstream_"
-            if (!config.trimLeft().toLowerCase().startsWith(begin)) err(`Unable to parse config, alias creation failed`)
+            if (!config.trimLeft().toLowerCase().startsWith(begin)) {
+              err(`Unable to parse config, alias creation failed`)
+              console.log(`Unable to parse config, alias creation failed. Wrong beginning`)
+            }
             else {
-              let port = +config.substr(begin.length, 6)
-              if (isNaN(port)) err(`Unable to parse config, alias creation failed`)
+              let port = parseInt(config.substr(begin.length, 6))
+              if (isNaN(port)) {
+                err(`Unable to parse config, alias creation failed`)
+                console.log(`Unable to parse config, alias creation failed. Unable to parse port`)
+              }
               else {
                 let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port, githubUsername}
                 try {
