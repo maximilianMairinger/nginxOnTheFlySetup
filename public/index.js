@@ -177,7 +177,9 @@ ws.addEventListener("message", async ({data: msg}) => {
       let updateReloading = gui.log("Reloading in " + timer)
       
       let lastTime = Date.now()
-      requestAnimationFrame(() => {
+      let f = () => {
+        requestAnimationFrame(f)
+        
         let curTime = Date.now()
         let timeDelta = curTime - lastTime
         timer -= timeDelta
@@ -185,7 +187,8 @@ ws.addEventListener("message", async ({data: msg}) => {
         updateReloading("Reloading in " + timer)
 
         lastTime = curTime
-      })
+      }
+      requestAnimationFrame(f)
       return
     }
     gui.log(msg.log)
@@ -243,3 +246,5 @@ function sendTry(o) {
   lastAskRepoName = o.commit.repo
   return ws.send(JSON.stringify({try: o}))
 }
+
+
