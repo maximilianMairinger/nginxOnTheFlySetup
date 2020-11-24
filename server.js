@@ -52,7 +52,7 @@ app.use(bodyParser.json());
 
 let subsequentRequestCount = 0
 
-const actualRateLimitPw = process.env.rateLimitPw ? process.env.rateLimitPw : salt({ length: 20 })
+const actualRateLimitPw = process.env.rateLimitPw ? process.env.rateLimitPw.toString() : salt({ length: 20 })
 
 app.ws("/", (ws) => {
   function log(msg) {
