@@ -141,7 +141,7 @@ const gui = (() => {
           }
         })  
       }
-      if (options.type !== password) {
+      if (options.type !== "password") {
         inputElem.addEventListener("input", () => {
           setTitle(question + " " + inputElem.value)
         })
