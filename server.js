@@ -13,6 +13,7 @@ const delay = require("delay")
 const del = require("del")
 const ms = require("milliseconds")
 const salt = require("crypto-random-string")
+const lt = require("long-timeout")
 
 // config
 const appDest = "/var/www/html"
@@ -67,7 +68,7 @@ app.ws("/", (ws) => {
 
 
     if (msg.try) {
-      if (subsequentRequestCount > 0) {
+      if (subsequentRequestCount > -1) {
         err("Sorry. Rate limited.")
         await delay(ms.seconds(1))
         let pwTest = await ask("Password to bypass")
@@ -76,9 +77,9 @@ app.ws("/", (ws) => {
       }
 
       subsequentRequestCount++
-      delay(ms.months(2)).then(() => {
+      lt.setTimeout(() => {
         subsequentRequestCount--
-      })
+      }, ms.months(2))
 
       let q = msg.try
 
@@ -268,10 +269,10 @@ app.ws("/", (ws) => {
         index.set(id, (resp) => {
           res(resp)
           index.delete(id)
-          clearTimeout(timeout)
+          lt.clearTimeout(timeout)
         })
 
-        let timeout = setTimeout(() => {
+        let timeout = lt.setTimeout(() => {
           index.delete(id)
           rej()
         }, ms.minutes(10))
