@@ -206,7 +206,7 @@ ws.addEventListener("message", async ({data: msg}) => {
     else gui.err(msg.err)
   }
   else if (msg.ask) {
-    ws.send(JSON.stringify({ask: {id: msg.ask.id, resp: await gui.ask(msg.ask.question)}}))
+    ws.send(JSON.stringify({ask: {id: msg.ask.id, resp: await gui.ask(msg.ask.question, msg.ask.options)}}))
   }
 }); 
 

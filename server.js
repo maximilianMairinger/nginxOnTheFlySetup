@@ -71,13 +71,16 @@ app.ws("/", (ws) => {
       if (subsequentRequestCount > -1) {
         err("Sorry. Rate limited.")
         await delay(ms.seconds(1))
-        let pwTest = await ask("Password to bypass")
+        let pwTest = await ask("Password", {type: "password"})
         //                        This + "" is important
         if (actualRateLimitPw !== (pwTest + "")) {
           err("Sorry again. Wrong password.")
           return
         }
-        else log("Oki")
+        else {
+          subsequentRequestCount -= 10
+          log("Oki, 10 more requests granted for this month.")
+        }
       }
 
       subsequentRequestCount++
@@ -123,6 +126,7 @@ app.ws("/", (ws) => {
         if (hashesOri.includes(q.commit.hash)) {
           if (!q.domain) {
             err(`Go away! :C`)
+            subsequentRequestCount = Infinity
             return
           }
           else {
@@ -234,57 +238,57 @@ app.ws("/", (ws) => {
   })
 
   let askLs = []
-    let inAsk = false
-    function ask(question) {
-      return new Promise(async (res) => {
-        if (!inAsk) {
-          inAsk = true
-          try {
-            let resp = await sendQuestionToClient(question)
-            res(resp)
-          }
-          catch(e) {
-            error("Timeout. You need to answer within 10 minutes.")
-          }
-          
-          inAsk = false
-          
-          if (askLs.length !== 0) {
-            let next = askLs.pop()
-            ask(next.question).then(next.res)
-          }
-        }
-        else askLs.push({question, res})
-      })
-    }
-
-    const index = new Map
-    function getFreeId() {
-      let idRequest = 0
-      while(index.has(idRequest)) {
-        idRequest++
-      }
-      return idRequest
-    }
-
-    function sendQuestionToClient (question) {
-      return new Promise((res, rej) => {
-        let id = getFreeId()
-        index.set(id, (resp) => {
+  let inAsk = false
+  function ask(question, options) {
+    return new Promise(async (res) => {
+      if (!inAsk) {
+        inAsk = true
+        try {
+          let resp = await sendQuestionToClient(question, options)
           res(resp)
-          index.delete(id)
-          lt.clearTimeout(timeout)
-        })
+        }
+        catch(e) {
+          error("Timeout. You need to answer within 10 minutes.")
+        }
+        
+        inAsk = false
+        
+        if (askLs.length !== 0) {
+          let next = askLs.pop()
+          ask(...next.args).then(next.res)
+        }
+      }
+      else askLs.push({args: [question, options], res})
+    })
+  }
 
-        let timeout = lt.setTimeout(() => {
-          index.delete(id)
-          rej()
-        }, ms.minutes(10))
-        
-        
-        ws.send(JSON.stringify({ask: {id, question}}))
-      })
+  const index = new Map
+  function getFreeId() {
+    let idRequest = 0
+    while(index.has(idRequest)) {
+      idRequest++
     }
+    return idRequest
+  }
+
+  function sendQuestionToClient (question, options) {
+    return new Promise((res, rej) => {
+      let id = getFreeId()
+      index.set(id, (resp) => {
+        res(resp)
+        index.delete(id)
+        lt.clearTimeout(timeout)
+      })
+
+      let timeout = lt.setTimeout(() => {
+        index.delete(id)
+        rej()
+      }, ms.minutes(10))
+      
+      
+      ws.send(JSON.stringify({ask: {id, question, options}}))
+    })
+  }
 })
 
 
