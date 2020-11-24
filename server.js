@@ -68,12 +68,11 @@ app.ws("/", (ws) => {
 
 
     if (msg.try) {
-      if (subsequentRequestCount > -1) {
+      if (subsequentRequestCount > 30) {
         err("Sorry. Rate limited.")
         await delay(ms.seconds(1))
         let pwTest = await ask("Password", {type: "password"})
 
-        console.log("gotPw", "\"" + pwTest + "\"", "correctPw", "\"" + actualRateLimitPw + "\"")
         //                        This + "" is important
         if (actualRateLimitPw !== (pwTest + "")) {
           
