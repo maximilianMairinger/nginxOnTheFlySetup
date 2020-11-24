@@ -5,6 +5,8 @@ module.exports = {
     exec_mode : "cluster",
     instances: 2,
     wait_ready: true,
-    args: "--port 4400"
+    env: {
+      port: 4400
+    }
   }]
 }

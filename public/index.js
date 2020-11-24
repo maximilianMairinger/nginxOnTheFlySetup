@@ -95,7 +95,7 @@ const gui = (() => {
   }
 
   let id = 0
-  function inq(question, options = {}) {
+  function inq(question, options = {nonoPostFix: false, type: "text", replace: undefined, check: undefined}) {
     return new Promise((res) => {
       setTitle(question)
       if (onAnyLog) onAnyLog("inq")
@@ -205,7 +205,10 @@ ws.addEventListener("message", async ({data: msg}) => {
     }
     else gui.err(msg.err)
   }
-});
+  else if (msg.ask) {
+    ws.send(JSON.stringify({ask: {id: data.id, resp: await gui.ask(data.question)}}))
+  }
+}); 
 
 async function askName() {
   let repo, hash, domain

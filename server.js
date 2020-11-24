@@ -3,7 +3,7 @@ const bodyParser = require("body-parser")
 const app = express()
 const expressWs = require('express-ws');
 const args = require("yargs").argv
-const port = args.port !== undefined ? args.port : 4400
+const port = process.env.port !== undefined ? process.env.port : 4400
 const shelljs = require("shelljs")
 const slugify = require("slugify")
 const path = require("path")
@@ -11,6 +11,8 @@ const { promises: fs } = require("fs")
 const detectPort = require("detect-port")
 const delay = require("delay")
 const del = require("del")
+const ms = require("milliseconds")
+const salt = require("crypto-random-string")
 
 // config
 const appDest = "/var/www/html"
@@ -43,6 +45,14 @@ let wsApp = expressWs(app)
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
+
+
+
+
+let subsequentRequestCount = 0
+
+const actualRateLimitPw = process.env.rateLimitPw ? process.env.rateLimitPw : salt({ length: 20 })
+
 app.ws("/", (ws) => {
   function log(msg) {
     ws.send(JSON.stringify({log: msg}))
@@ -54,7 +64,22 @@ app.ws("/", (ws) => {
 
   ws.on("message", async (msg) => {
     msg = JSON.parse(msg)
+
+
     if (msg.try) {
+      if (subsequentRequestCount > 0) {
+        err("Sorry. Rate limited.")
+        await delay(ms.seconds(1))
+        let pwTest = await ask("Password to bypass")
+
+        if (actualRateLimitPw !== pwTest) return
+      }
+
+      subsequentRequestCount++
+      delay(ms.months(2)).then(() => {
+        subsequentRequestCount--
+      })
+
       let q = msg.try
 
 
@@ -197,6 +222,63 @@ app.ws("/", (ws) => {
         console.log("Unexpected error in try: ", e)
         err("Internal error")
       }
+    }
+    else if (msg.ask) {
+      index.get(msg.ask.id)(msg.ask.resp)
+    }
+
+
+    let askLs = []
+    let inAsk = false
+    function ask(question) {
+      return new Promise(async (res) => {
+        if (!inAsk) {
+          inAsk = true
+          try {
+            let resp = await sendQuestionToClient(question)
+            res(resp)
+          }
+          catch(e) {
+            error("Timeout. You need to answer within 10 minutes.")
+          }
+          
+          inAsk = false
+          
+          if (askLs.length !== 0) {
+            let next = askLs.pop()
+            ask(next.question).then(next.res)
+          }
+        }
+        else askLs.push({question, res})
+      })
+    }
+
+    const index = new Map
+    function getFreeId() {
+      let idRequest = 0
+      while(index.has(idRequest)) {
+        idRequest++
+      }
+      return idRequest
+    }
+
+    function sendQuestionToClient (question) {
+      return new Promise((res, rej) => {
+        let id = getFreeId()
+        index.set(id, (resp) => {
+          res(resp)
+          index.delete(id)
+          clearTimeout(timeout)
+        })
+
+        let timeout = setTimeout(() => {
+          index.delete(id)
+          rej()
+        }, ms.minutes(10))
+        
+        
+        ws.send(JSON.stringify({ask: {id, question}}))
+      })
     }
   })
 })
