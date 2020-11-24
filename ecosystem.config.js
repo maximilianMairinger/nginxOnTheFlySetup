@@ -8,7 +8,7 @@ module.exports = {
   apps: [{
     script: "server.js",
     name: "nginxOnTheFlySetup",
-    exec_mode : "cluster",
+    exec_mode : "fork",
     max_restarts: 50,
     instances: 2,
     wait_ready: true,
