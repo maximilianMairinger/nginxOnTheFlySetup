@@ -162,9 +162,9 @@ const gui = (() => {
 
 
 let subdomains = location.host.split(".").reverse()
-let overshoot = subdomains.splice(0, 3);
+let overshoot = subdomains.splice(0, 3).reverse();
 
-gui.log(`View any version of any repository by going to <i><a href="[version].[repo].${overshoot.reverse().join(".")}">[version].[repo].${overshoot.reverse().join(".")}</a></i>`);
+gui.log(`View any version of any repository by going to <i><a href="[version].[repo].${overshoot.join(".")}">[version].[repo].${overshoot.join(".")}</a></i>`);
 
 
 ws.addEventListener("message", async ({data: msg}) => {
