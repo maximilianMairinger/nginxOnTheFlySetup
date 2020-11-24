@@ -102,7 +102,7 @@ const gui = (() => {
       if (!(question.endsWith("?") || question.endsWith(":")) && !options.nonoPostFix) question = question + ":"
       apd(`<div class="message">${saniHTML(question)}</div><input id="inp${id}" type="${options.type}" autocomplete="off"><br><br>`)
       let inputElem = document.getElementById("inp" + id)
-      inputElem.style.width = `calc(100% - ${inputElem.previousSibling.offsetWidth + parseInt(getComputedStyle(inputElem.previousSibling).marginRight) - 1}px)`
+      inputElem.style.width = `calc(100% - ${inputElem.previousSibling.offsetWidth + parseInt(getComputedStyle(inputElem.previousSibling).marginRight) + parseInt(getComputedStyle(inputElem).marginRight) + 1}px)`
 
       inputElem.focus()
       inputElem.addEventListener("keydown", ({key}) => {
