@@ -73,7 +73,11 @@ app.ws("/", (ws) => {
         await delay(ms.seconds(1))
         let pwTest = await ask("Password to bypass")
         //                        This + "" is important
-        if (actualRateLimitPw !== (pwTest + "")) return
+        if (actualRateLimitPw !== (pwTest + "")) {
+          err("Sorry again. Wrong password.")
+          return
+        }
+        else log("Oki")
       }
 
       subsequentRequestCount++
