@@ -266,14 +266,11 @@ app.ws("/", (ws) => {
     function sendQuestionToClient (question) {
       return new Promise((res, rej) => {
         let id = getFreeId()
-        console.log("Got id ", id, index.has(id))
         index.set(id, (resp) => {
           res(resp)
           index.delete(id)
           lt.clearTimeout(timeout)
         })
-
-        console.log("Index", index)
 
         let timeout = lt.setTimeout(() => {
           index.delete(id)
