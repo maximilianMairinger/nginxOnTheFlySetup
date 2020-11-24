@@ -266,6 +266,7 @@ app.ws("/", (ws) => {
     function sendQuestionToClient (question) {
       return new Promise((res, rej) => {
         let id = getFreeId()
+        console.log("Got id ", id)
         index.set(id, (resp) => {
           res(resp)
           index.delete(id)
