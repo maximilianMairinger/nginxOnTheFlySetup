@@ -9,6 +9,7 @@ module.exports = {
     script: "server.js",
     name: "nginxOnTheFlySetup",
     exec_mode : "cluster",
+    max_restarts: 50,
     instances: 2,
     wait_ready: true,
     env: {
