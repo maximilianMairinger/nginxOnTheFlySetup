@@ -90,6 +90,8 @@ app.ws("/", (ws) => {
       console.log("subsequentRequestCount3", subsequentRequestCount)
 
       subsequentRequestCount++
+
+      console.log("subsequentRequestCount now at", subsequentRequestCount)
       lt.setTimeout(() => {
         subsequentRequestCount--
       }, ms.months(2))
