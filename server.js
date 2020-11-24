@@ -73,7 +73,7 @@ app.ws("/", (ws) => {
         await delay(ms.seconds(1))
         let pwTest = await ask("Password", {type: "password"})
 
-        console.log("gotPw", pwTest, "correctPw", actualRateLimitPw)
+        console.log("gotPw", "\"" + pwTest + "\"", "correctPw", "\"" + actualRateLimitPw + "\"")
         //                        This + "" is important
         if (actualRateLimitPw !== (pwTest + "")) {
           
