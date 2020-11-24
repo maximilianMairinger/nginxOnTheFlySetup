@@ -51,6 +51,7 @@ app.use(bodyParser.json());
 
 
 let subsequentRequestCount = 0
+console.log("subsequentRequestCount1", subsequentRequestCount)
 
 const actualRateLimitPw = process.env.rateLimitPw ? process.env.rateLimitPw.toString() : salt({ length: 20 })
 
@@ -68,6 +69,7 @@ app.ws("/", (ws) => {
 
 
     if (msg.try) {
+      console.log("subsequentRequestCount2", subsequentRequestCount)
       if (subsequentRequestCount > 30) {
         err("Sorry. Rate limited.")
         await delay(ms.seconds(1))
@@ -84,6 +86,8 @@ app.ws("/", (ws) => {
           log("Oki, 10 more requests granted for this month.")
         }
       }
+
+      console.log("subsequentRequestCount3", subsequentRequestCount)
 
       subsequentRequestCount++
       lt.setTimeout(() => {
