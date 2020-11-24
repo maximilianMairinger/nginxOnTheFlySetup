@@ -141,9 +141,12 @@ const gui = (() => {
           }
         })  
       }
-      inputElem.addEventListener("input", () => {
-        setTitle(question + " " + inputElem.value)
-      })
+      if (options.type !== password) {
+        inputElem.addEventListener("input", () => {
+          setTitle(question + " " + inputElem.value)
+        })
+      }
+      
       id++
     })
 
