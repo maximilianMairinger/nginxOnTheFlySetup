@@ -250,7 +250,7 @@ app.ws("/", (ws) => {
           res(resp)
         }
         catch(e) {
-          error("Timeout. You need to answer within 10 minutes.")
+          err("Timeout. You need to answer within 10 minutes.")
         }
         
         inAsk = false
