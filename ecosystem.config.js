@@ -1,3 +1,9 @@
+const fs = require("fs")
+const path = require("path")
+
+
+const rateLimitPwPath = path.join(__dirname, "rateLimitPw")
+
 module.exports = {
   apps: [{
     script: "server.js",
@@ -6,7 +12,8 @@ module.exports = {
     instances: 2,
     wait_ready: true,
     env: {
-      port: 4400
+      port: 4400,
+      rateLimitPw: fs.existsSync(rateLimitPwPath) ? fs.readFileSync(rateLimitPwPath) : undefined
     }
   }]
 }
