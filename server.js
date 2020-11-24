@@ -72,8 +72,11 @@ app.ws("/", (ws) => {
         err("Sorry. Rate limited.")
         await delay(ms.seconds(1))
         let pwTest = await ask("Password", {type: "password"})
+
+        console.log("gotPw", pwTest, "correctPw", actualRateLimitPw)
         //                        This + "" is important
         if (actualRateLimitPw !== (pwTest + "")) {
+          
           err("Sorry again. Wrong password.")
           return
         }
