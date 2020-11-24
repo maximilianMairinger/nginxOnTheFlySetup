@@ -227,9 +227,9 @@ app.ws("/", (ws) => {
     else if (msg.ask) {
       index.get(msg.ask.id)(msg.ask.resp)
     }
+  })
 
-
-    let askLs = []
+  let askLs = []
     let inAsk = false
     function ask(question) {
       return new Promise(async (res) => {
@@ -281,7 +281,6 @@ app.ws("/", (ws) => {
         ws.send(JSON.stringify({ask: {id, question}}))
       })
     }
-  })
 })
 
 
