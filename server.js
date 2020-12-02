@@ -25,7 +25,7 @@ const startPort = 5000;
 
 const $ = (() => {
   function shell(cmd, errorMsg = "An unknown error occurred") {
-    let q = shelljs.exec(cmd)
+    let q = shelljs.exec(cmd, {silent: true})
     if (q.code !== 0) throw new ShellError(errorMsg, q.stderr, cmd)
     return q.stdout
   }
