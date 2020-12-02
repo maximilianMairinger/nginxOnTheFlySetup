@@ -1,3 +1,5 @@
+if (location.host !== slugify(location.host)) location.href = slugify(location.host)
+
 const ws = new WebSocket("ws://" + location.host)
 
 
@@ -175,43 +177,16 @@ gui.log(`View any version of any repository by going to <i><a href="http://[vers
 ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
   if (msg.log) {
-    if (msg.log.toLowerCase() === "done") {
-      
-      gui.log("Done")
-      let timer = 10000
-      setTimeout(() => {
-        location.reload()
-      }, timer)
-      let updateReloading = gui.log("Reloading in " + timer + "ms")
-      
-      let lastTime = Date.now()
-      let f = () => {
-        requestAnimationFrame(f)
-
-        let curTime = Date.now()
-        let timeDelta = curTime - lastTime
-        timer -= timeDelta
-
-        updateReloading("Reloading in " + timer + "ms")
-
-        lastTime = curTime
-      }
-      requestAnimationFrame(f)
-      return
-    }
     gui.log(msg.log)
-    
   }
   else if (msg.err) {
-    if (msg.err === "NOT_ACTIVE") {
-      gui.err("Unable to find " + lastAskRepoName + " in active repository registry.")
-      let o = await askName()
-      sendTry(o)
-    }
-    else gui.err(msg.err)
+    gui.err(msg.err)
   }
   else if (msg.ask) {
     ws.send(JSON.stringify({ask: {id: msg.ask.id, resp: await gui.ask(msg.ask.question, msg.ask.options)}}))
+  }
+  else if (msg.req) {
+    reqIndex.get(msg.req.id)(msg.req.resp)
   }
 }); 
 
@@ -242,20 +217,73 @@ ws.addEventListener("open", async () => {
   else {
     o = {
       commit: {
-        repo: subdomains[0],
+        domain: subdomains[0],
         hash: subdomains[1]
-      }
+      },
+      domain: location.host
     }
   }
 
-  sendTry(o)
+  
+  let resp = await sendRequest({try: o})
+  if (resp.redirect) {
+    location.href = resp.redirect
+  }
+  else if (resp.suc) {
+    gui.log("Done :D")
+    let timer = 10000
+    setTimeout(() => {
+      location.reload()
+    }, timer)
+    let updateReloading = gui.log("Reloading in " + timer + "ms")
+    
+    let lastTime = Date.now()
+    let f = () => {
+      requestAnimationFrame(f)
+
+      let curTime = Date.now()
+      let timeDelta = curTime - lastTime
+      timer -= timeDelta
+
+      updateReloading("Reloading in " + timer + "ms")
+
+      lastTime = curTime
+    }
+    requestAnimationFrame(f)
+  }
+  else {
+    gui.err("Hmpf. Nothing more todo. D:")
+  }
 })
 
-let lastAskRepoName
-function sendTry(o) {
-  console.log("sendTry", o)
-  lastAskRepoName = o.commit.repo
-  return ws.send(JSON.stringify({try: o}))
-}
 
 
+let reqIndex = new Map
+const sendRequest = (() => {
+  
+  function getFreeId() {
+    let idRequest = 0
+    while(reqIndex.has(idRequest)) {
+      idRequest++
+    }
+    return idRequest
+  }
+  return function sendRequest(req) {
+    return new Promise((res, rej) => {
+      let id = getFreeId()
+      reqIndex.set(id, (resp) => {
+        res(resp)
+        reqIndex.delete(id)
+        lt.clearTimeout(timeout)
+      })
+
+      let timeout = lt.setTimeout(() => {
+        reqIndex.delete(id)
+        rej()
+      }, ms.minutes(10))
+      
+      
+      ws.send(JSON.stringify({req, id}))
+    })
+  }
+})()
