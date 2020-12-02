@@ -16,7 +16,6 @@ const ms = require("milliseconds")
 const salt = require("crypto-random-string")
 const lt = require("long-timeout")
 const prettyMs = require("pretty-ms")
-const slugify = require("slugify")
 
 // config
 const appDest = "/var/www/html"
@@ -154,7 +153,7 @@ app.ws("/", (ws) => {
             let repo = ""
             let hash = q.commit.hash
 
-            q.domain = q.domain.split(".").map(s => slugify(s)).join(".")
+            q.domain = q.domain.split(".").map(s => slugify(s)).join(".").toLowerCase()
             // just in case slugify changes its behaviour
             q.domain = q.domain.split("|").join("or")
 
