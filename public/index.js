@@ -1,4 +1,8 @@
-if (location.host !== slugify(location.host)) location.href = slugify(location.host)
+if (location.host !== slugify(location.host)) {
+  location.href = slugify(location.host)
+  throw new Error("RELAODASD")
+}
+
 
 const ws = new WebSocket("ws://" + location.host)
 

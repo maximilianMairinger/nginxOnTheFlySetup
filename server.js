@@ -156,12 +156,11 @@ app.ws("/", (ws) => {
 
             q.domain = q.domain.split(".").map(s => slugify(s)).join(".")
             // just in case slugify changes its behaviour
-            q.domain.split("|").join("or")
+            q.domain = q.domain.split("|").join("or")
 
 
             if (!q.domain) q.domain = q.commit.hash + "." + repo
             if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
-            q.domain = slugify(q.domain.toLowerCase())
 
 
             if (q.commit.domain !== undefined) {
