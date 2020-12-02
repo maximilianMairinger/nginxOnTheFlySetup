@@ -65,7 +65,9 @@ app.ws("/", (ws) => {
 
 
   ws.on("message", async (msg) => {
+    if (!msg) return
     msg = JSON.parse(msg)
+    if (typeof msg !== "object") return
 
 
     if (msg.try) {
@@ -110,7 +112,7 @@ app.ws("/", (ws) => {
         let repoLower = q.commit.repo.toLowerCase()
         let projectNameFindIndex = projectsLowerCase.indexOf(repoLower)
         if (projectNameFindIndex === -1) {
-          err(`NOT_ACTIVE`)
+          err(`Not an active repo`)
           return
         }
                 
@@ -131,7 +133,23 @@ app.ws("/", (ws) => {
 
 
         let hashesOri = await fs.readdir(path.join(appDest, oriProjectName))
-        if (hashesOri.includes(q.commit.hash)) {
+        
+
+        let isAlreadyPresent = hashesOri.includes(q.commit.hash)
+        if (!isAlreadyPresent) {
+          let myCommitLength = q.commit.hash.length
+          let hashesTrimmed = hashesOri.map((s) => s.substr(0, myCommitLength))
+          if (hashesTrimmed.includes(q.commit.hash)) {
+            let mentIt = await ask("This hash \"\" is already built and ready to go. Did you mean it? (y/n)")
+            if (mentIt.toLowerCase().startsWith("y")) {
+              isAlreadyPresent = true
+              q.commit.hash = hashesOri[hashesTrimmed.indexOf(q.commit.hash)]
+            }
+          }
+        }
+
+
+        if (isAlreadyPresent) {
           if (!q.domain) {
             err(`Go away! :C`)
             subsequentRequestCount = Infinity
@@ -241,7 +259,7 @@ app.ws("/", (ws) => {
       }
     }
     else if (msg.ask) {
-      index.get(msg.ask.id)(msg.ask.resp)
+      index.get(msg.ask.id + "")(msg.ask.resp + "")
     }
   })
 
@@ -272,9 +290,9 @@ app.ws("/", (ws) => {
 
   const index = new Map
   function getFreeId() {
-    let idRequest = 0
+    let idRequest = salt({length: 20})
     while(index.has(idRequest)) {
-      idRequest++
+      idRequest = salt({length: 20})
     }
     return idRequest
   }
