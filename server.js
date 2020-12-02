@@ -80,7 +80,7 @@ app.ws("/", (ws) => {
         ws.send(JSON.stringify({req: {id, resp}}))
       }
 
-      let response = (() => {
+      let response = await (async () => {
         async function isAuthorized() {
           if (pwTestDenied) return false
           if (subsequentRequestCount > 30) {
@@ -135,7 +135,6 @@ app.ws("/", (ws) => {
 
 
         if (msg.req.try) {
-
           if (!await isAuthorized()) return
     
           let q = msg.req.try
