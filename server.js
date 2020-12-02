@@ -228,7 +228,7 @@ app.ws("/", (ws) => {
           }
           catch(e) {
             console.log("Failure after pm2 start! Cleanup: Killing processes.")
-            $(`cd ${conf.dir} && pm2 del ecosystem.config.js`, `Filed to cleanup process`)
+            $(`cd ${conf.dir} && pm2 del ecosystem.config.js`, `Failed to cleanup process`)
             throw e
           }
           log("Done")
