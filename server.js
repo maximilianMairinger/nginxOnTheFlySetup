@@ -62,9 +62,11 @@ const actualRateLimitPw = process.env.rateLimitPw ? process.env.rateLimitPw.toSt
 app.ws("/", (ws) => {
   function log(msg) {
     ws.send(JSON.stringify({log: msg}))
+    console.log(msg)
   }
   function err(msg) {
     ws.send(JSON.stringify({err: msg}))
+    console.err(msg)
   }
 
 
