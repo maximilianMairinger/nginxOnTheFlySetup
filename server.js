@@ -167,7 +167,7 @@ app.ws("/", (ws) => {
               let p = path.join(__dirname, "domainProjectIndex")
               let indexRaw = ""
               if (fsSync.existsSync(p)) {
-                indexRaw = await fs.readFile(p)
+                indexRaw = (await fs.readFile(p)).toString()
               }
               indexRaw = indexRaw.trim()
               let ar = indexRaw.split("\n")
