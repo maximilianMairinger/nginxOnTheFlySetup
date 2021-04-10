@@ -178,7 +178,7 @@ app.ws("/", (ws) => {
                 let q = e.split("|")
                 index[q[0]] = q[1]
               })
-              if (index[q.commit.domain] !== undefined) repo = index[q.commit.domain] !== undefined
+              if (index[q.commit.domain] !== undefined) repo = index[q.commit.domain]
               
             }
             else if (q.commit.repo !== undefined) {
