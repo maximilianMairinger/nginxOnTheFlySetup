@@ -316,6 +316,7 @@ app.ws("/", (ws) => {
                     }
                   }
                 }
+                console.log("ment hash", mentHash)
 
 
                 if (mentHash === undefined) {
