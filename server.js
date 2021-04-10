@@ -204,7 +204,11 @@ app.ws("/", (ws) => {
             // just in case slugify changes its behaviour
             q.domain = q.domain.split("|").join("or")
 
-            if (isHarmfull(q.domain) || isHarmfull(q.commit.hash) || isHarmfull(q.commit.domain) || isHarmfull(repo)) return
+            if (isHarmfull(q.domain) || isHarmfull(q.commit.hash) || isHarmfull(q.commit.domain) || isHarmfull(repo)) {
+              console.warn("Invalid parameters tried.", q)
+              err(`Leave me alone. D: Your parameters are malformed`)
+              return
+            }
 
             let hash = q.commit.hash
 
@@ -212,13 +216,18 @@ app.ws("/", (ws) => {
             let repoLower = repo.toLowerCase()
             let projectNameFindIndex = projectsLowerCase.indexOf(repoLower)
             if (projectNameFindIndex === -1) {
-              log("Unable to find project")
+              err("Unable to find project")
               try {
                 while(projectNameFindIndex === -1) {
                   console.log("Unable to find repo \"" + repo + "\" in active repo repository. Asking for new name...")
 
                   repo = await ask("Please enter a valid project name")
                   if (!await isAuthorized()) return 
+                  if (isHarmfull(repo)) {
+                    console.warn("Invalid repo name tried. \"" + repo + "\"")
+                    err(`Thats not a valid repo name`)
+                    continue
+                  }
                   repoLower = repo.toLowerCase()
                   projectNameFindIndex = projectsLowerCase.indexOf(repoLower)
                 }
@@ -247,7 +256,7 @@ app.ws("/", (ws) => {
     
             let hashesOri = await fs.readdir(path.join(appDest, oriProjectName))
             
-    
+            
             let isAlreadyPresent = hashesOri.includes(hash)
             if (!isAlreadyPresent) {
               let myCommitLength = hash.length
@@ -260,17 +269,17 @@ app.ws("/", (ws) => {
 
               if (hashesTrimmedIncludes || hashAtLengthIncludes) {
                 log(`This could be a duplicate`)
-                let mentThis
+                let mentHash
                 if (hashesTrimmedIncludes) {
                   let mentIt = false
                   while (!mentIt) {
                     let index = hashesTrimmed.indexOf(hash)
                     if (index === -1) {
-                      mentThis = undefined
+                      mentHash = undefined
                       break
                     }
-                    mentThis = `${hashesOri[index]}.${q.commit.domain}.maximilian.mairinger.com`
-                    log(mentThis)
+                    mentHash = hashesOri[index]
+                    log(`${mentHash}.${q.commit.domain}.maximilian.mairinger.com`)
                     try {
                       mentIt = isConfirmation(await ask("Did you mean this? (Y/n)"))
                       if (!mentIt) hashesOri = hashesOri.slice(index + 1)
@@ -279,23 +288,56 @@ app.ws("/", (ws) => {
                       return
                     }
                   }
-                  if (mentThis !== undefined) {
-                    let resp
-                    try {
-                      resp = isConfirmation(await ask(`Do you want do create an alias for ${oriProjectName} here? (y/N)`), false)
+                  
+                }
+                else {
+                  let maybeHash
+                  for (let ori of hashesOri) {
+                    if (hash.substr(0, ori.length < 7 ? 7 : ori.length) === ori) {
+                      maybeHash = ori
+                      log(`${ori}.${q.commit.domain}.maximilian.mairinger.com`)
+                      try {
+                        mentIt = isConfirmation(await ask("Did you mean this? (Y/n)"))
+                      }
+                      catch(e) {return}
+                      if (mentIt) {
+                        mentHash = maybeHash
+                        break
+                      }
                     }
-                    catch(e) {return}
-                    if (resp) {
-                      isAlreadyPresent = true
-                      let hash
+                  }
+                }
+
+
+                if (mentHash === undefined) {
+                  let wantToCreateAlias
+                  try {
+                    wantToCreateAlias = isConfirmation(await ask(`Do you want do create an alias for ${oriProjectName} here? (y/N)`), false)
+                  }
+                  catch(e) {return}
+                  if (wantToCreateAlias) {
+                    let confirmedHash
+                    isAlreadyPresent = true
+                    let hash
+
+                    let whatHashAsk = true
+                    while(whatHashAsk) {
                       try {
                         hash = await ask("For what hash?")
                       }
                       catch(e) {return}
 
+                      if (isHarmfull(hash)) {
+                        console.warn("Invalid hash name tried. \"" + hash + "\"")
+                        err(`Thats not a valid hash`)
+                        continue
+                      }
+
+
+
                       let hashesOri = await fs.readdir(path.join(appDest, oriProjectName))
 
-                      let confirmedHash
+                      
 
                       if (hashesOri.includes(hash)) {
                         confirmedHash = hash
@@ -332,37 +374,55 @@ app.ws("/", (ws) => {
                               }
                             }
                             if (mentThis !== undefined) {
-                              log(`Great an alias for will be created here!`)
                               confirmedHash = mentHash
                             }
                           }
-                          else {
-                            // TODO
+                          else if (hashAtLengthIncludes) {
+                            let found
+                            for (let ori of hashesOri) {
+                              if (hash.substr(0, ori.length < 7 ? 7 : ori.length) === ori) {
+                                mentHash = ori
+                                mentThis = `${ori}.${q.commit.domain}.maximilian.mairinger.com`
+                                log(mentThis)
+                                try {
+                                  mentIt = isConfirmation(await ask("Did you mean this? (Y/n)"))
+                                }
+                                catch(e) {return}
+                                if (mentIt) {
+                                  found = mentHash
+                                  break
+                                }
+                              }
+                            }
+                            if (found !== undefined) {
+                              confirmedHash = found
+                            }
+                            
                             return
                           }
                         }
-                        else {
-                          err("Sorry, cannot find this one")
-                          return 
-                        }
                       }
 
-                      
+                      if (confirmedHash !== undefined) {
+                        log(`Great an alias for will be created here!`)
+                        q.commit.hash = confirmedHash
+                        whatHashAsk = false
+                        isAlreadyPresent = true
+                      }
+                      else log(`Ok then lets try another one`)
                     }
-                    
                   }
                   else {
-                    // TODO
-                    return
+                    log("Hmm... Then there is nothing more todo here")
                   }
+                  
                 }
-                // TODO
-                return 
+                else {
+                  log(`Ok. Lemmi create an alias real quick!`)
+                  q.commit.hash = mentHash
+                  isAlreadyPresent = true
+                }
               }
-              else {
-                return
-              }
-
             }
     
     
