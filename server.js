@@ -22,7 +22,7 @@ const appDest = "/var/www/html"
 const nginxDest = "/etc/nginx"
 const githubUsername = "maximilianMairinger"
 const startPort = 5000;
-console.log("Starting :D")
+console.log("Starting :DD")
 
 function isConfirmation(resp, _default = true) {
   return mentIt === "" ? _default : resp.toLowerCase().startsWith("y")
