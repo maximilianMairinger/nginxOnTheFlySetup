@@ -278,10 +278,10 @@ const sendRequest = (() => {
       reqIndex.set(id, (resp) => {
         res(resp)
         reqIndex.delete(id)
-        lt.clearTimeout(timeout)
+        clearTimeout(timeout)
       })
 
-      let timeout = lt.setTimeout(() => {
+      let timeout = setTimeout(() => {
         reqIndex.delete(id)
         rej()
       }, ms.minutes(10))
