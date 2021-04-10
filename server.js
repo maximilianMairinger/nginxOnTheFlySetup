@@ -151,6 +151,8 @@ app.ws("/", (ws) => {
               projectsLowerCase.push(e.toLowerCase())
             })
 
+            console.log(q)
+
             let repo = ""
             let hash = q.commit.hash
 
