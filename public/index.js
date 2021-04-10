@@ -256,7 +256,7 @@ ws.addEventListener("open", async () => {
     requestAnimationFrame(f)
   }
   else {
-    gui.err("Hmpf. Nothing more todo. D:")
+    gui.err("Hmpf. Exited with error :/")
   }
 })
 

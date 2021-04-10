@@ -441,7 +441,7 @@ app.ws("/", (ws) => {
                 subsequentRequestCount = Infinity
               }
               else {
-                // make alias
+                console.log("make alias")
                 let config 
                 try {
                   config = (await fs.readFile(path.join(nginxDest, "sites-available", `${hash}.${repo}.maximilian.mairinger.com`).toLowerCase())).toString()
