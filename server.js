@@ -23,7 +23,7 @@ const nginxDest = "/etc/nginx"
 const githubUsername = "maximilianMairinger"
 const startPort = 5000;
 
-
+console.log("Starting :D")
 
 const $ = (() => {
   function shell(cmd, errorMsg = "An unknown error occurred") {

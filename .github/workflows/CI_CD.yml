@@ -36,7 +36,7 @@ jobs:
           cd ~/nginxOnTheFlySetup
           git pull
           source ~/.nvm/nvm.sh
-          nvm use 14.0.0
+          nvm use default
           npm i
           npm run build --if-present
           pm2 reload ecosystem.config.js
