@@ -284,7 +284,7 @@ const sendRequest = (() => {
       let timeout = setTimeout(() => {
         reqIndex.delete(id)
         rej()
-      }, ms.minutes(10))
+      }, 10 * 1000 * 60)
       
       
       ws.send(JSON.stringify({req, id}))
