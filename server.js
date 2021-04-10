@@ -205,9 +205,15 @@ app.ws("/", (ws) => {
             q.domain = q.domain.split("|").join("or")
 
 
-            
+            let isAnySubdomainHarmfull = false
+            for (let sub of q.domain.split(".")) {
+              if (isHarmfull(sub)) {
+                isAnySubdomainHarmfull = true
+                break
+              }
+            }
 
-            if (q.domain.split(".").reduce((acc, cur) => isHarmfull(cur) || acc) || q.domain.split(".").length <= 10 || isHarmfull(q.commit.hash) || isHarmfull(q.commit.domain) || isHarmfull(repo)) {
+            if (isAnySubdomainHarmfull || q.domain.split(".").length >= 8 || isHarmfull(q.commit.hash) || isHarmfull(q.commit.domain) || isHarmfull(repo)) {
               console.warn("Invalid parameters tried.", q)
               err(`Leave me alone. D: Your parameters are malformed`)
               return
