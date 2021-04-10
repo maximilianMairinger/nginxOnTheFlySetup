@@ -25,7 +25,7 @@ const startPort = 5000;
 console.log("Starting :DD")
 
 function isConfirmation(resp, _default = true) {
-  return mentIt === "" ? _default : resp.toLowerCase().startsWith("y")
+  return resp === "" ? _default : resp.toLowerCase().startsWith("y")
 }
 
 const notHarmfullRegex = /^([a-z]|[A-Z]|[0-9])*$/g
