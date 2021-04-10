@@ -204,7 +204,10 @@ app.ws("/", (ws) => {
             // just in case slugify changes its behaviour
             q.domain = q.domain.split("|").join("or")
 
-            if (isHarmfull(q.domain) || isHarmfull(q.commit.hash) || isHarmfull(q.commit.domain) || isHarmfull(repo)) {
+
+            
+
+            if (q.domain.split(".").reduce((acc, cur) => isHarmfull(cur) || acc) || q.domain.split(".").length <= 10 || isHarmfull(q.commit.hash) || isHarmfull(q.commit.domain) || isHarmfull(repo)) {
               console.warn("Invalid parameters tried.", q)
               err(`Leave me alone. D: Your parameters are malformed`)
               return
