@@ -66,7 +66,7 @@ app.ws("/", (ws) => {
   }
   function err(msg) {
     ws.send(JSON.stringify({err: msg}))
-    console.err(msg)
+    console.error(msg)
   }
 
 
