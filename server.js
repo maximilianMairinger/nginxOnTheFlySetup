@@ -328,17 +328,17 @@ app.ws("/", (ws) => {
                   if (wantToCreateAlias) {
                     let confirmedHash
                     isAlreadyPresent = true
-                    let hash
+                    let newHash
 
                     let whatHashAsk = true
                     while(whatHashAsk) {
                       try {
-                        hash = await ask("For what hash?")
+                        newHash = await ask("For what hash?")
                       }
                       catch(e) {return}
 
-                      if (isHarmfull(hash)) {
-                        console.warn("Invalid hash name tried. \"" + hash + "\"")
+                      if (isHarmfull(newHash)) {
+                        console.warn("Invalid hash name tried. \"" + newHash + "\"")
                         err(`Thats not a valid hash`)
                         continue
                       }
@@ -349,16 +349,16 @@ app.ws("/", (ws) => {
 
                       
 
-                      if (hashesOri.includes(hash)) {
-                        confirmedHash = hash
+                      if (hashesOri.includes(newHash)) {
+                        confirmedHash = newHash
                       }
                       else {
-                        let myCommitLength = hash.length
+                        let myCommitLength = newHash.length
                         let hashesTrimmed = hashesOri.map((s) => s.substr(0, myCommitLength))
                         let hashesOriLengths = [...new Set(hashesOri.map((e) => e.length < 7 ? 7 : e.length))]
-                        let hashAtDifferntLengths = hashesOriLengths.map((e) => hash.substr(0, e))
+                        let hashAtDifferntLengths = hashesOriLengths.map((e) => newHash.substr(0, e))
   
-                        let hashesTrimmedIncludes = hashesTrimmed.includes(hash)
+                        let hashesTrimmedIncludes = hashesTrimmed.includes(newHash)
                         let hashAtLengthIncludes = !hashesOri.excludes(...hashAtDifferntLengths)
                         if (hashesTrimmedIncludes || hashAtLengthIncludes) {
                           log(`Again... This could be a duplicate`)
@@ -367,7 +367,7 @@ app.ws("/", (ws) => {
                           if (hashesTrimmedIncludes) {
                             let mentIt = false
                             while (!mentIt) {
-                              let index = hashesTrimmed.indexOf(hash)
+                              let index = hashesTrimmed.indexOf(newHash)
                               if (index === -1) {
                                 mentThis = undefined
                                 break
@@ -390,7 +390,7 @@ app.ws("/", (ws) => {
                           else if (hashAtLengthIncludes) {
                             let found
                             for (let ori of hashesOri) {
-                              if (hash.substr(0, ori.length < 7 ? 7 : ori.length) === ori) {
+                              if (newHash.substr(0, ori.length < 7 ? 7 : ori.length) === ori) {
                                 mentHash = ori
                                 mentThis = `${ori}.${q.commit.domain}.maximilian.mairinger.com`
                                 log(mentThis)
@@ -415,7 +415,7 @@ app.ws("/", (ws) => {
 
                       if (confirmedHash !== undefined) {
                         log(`Great an alias for will be created here!`)
-                        q.commit.hash = confirmedHash
+                        hash = q.commit.hash = confirmedHash
                         whatHashAsk = false
                         isAlreadyPresent = true
                       }
@@ -429,7 +429,7 @@ app.ws("/", (ws) => {
                 }
                 else {
                   log(`Ok. Lemmi create an alias real quick!`)
-                  q.commit.hash = mentHash
+                  hash = q.commit.hash = mentHash
                   isAlreadyPresent = true
                 }
               }
