@@ -16,6 +16,8 @@ const ms = require("milliseconds")
 const salt = require("crypto-random-string")
 const lt = require("long-timeout")
 const prettyMs = require("pretty-ms")
+const cliCmdParser = require("cli-cmd-ast")
+const { constrImageWeb } = require("image-web")
 
 // config
 const appDest = "/var/www/html"
@@ -32,7 +34,6 @@ const notHarmfullRegex = /^([a-z]|[A-Z]|[0-9])*$/g
 function isHarmfull(p) {
   return !p.match(notHarmfullRegex)
 }
-
 
 
 
@@ -498,6 +499,44 @@ app.ws("/", (ws) => {
           
             try {
               await createAppConf(conf, log, err)
+
+              log(`Compressing preview images...`)
+              try {
+                const pack = JSON.parse(path.join(conf.appDest, "package.json"))
+                if (pack.scripts !== undefined) {
+                  if (pack.scripts.compressImages !== undefined) {
+                    const cmd = pack.scripts.compressImages
+                    const ast = cliCmdParser.toAst(cmd)
+                    const alg = ast.args.algorithms.includes("webp") ? ["webp"] : (ast.args.algorithms.includes("jpg") ? ["jpg"] : undefined)
+                    if (alg === undefined) throw new Error("No webp or jpg algorithm defined")
+                    const res = ast.args.resolutions.includes("PREV") ? ["PREV"] : undefined
+                    if (res === undefined) throw new Error("No PREV resolution defined")
+                    const src = ast.cmds[0]
+                    if (!src) throw new Error("No src defined")
+                    const dest = ast.cmds[1]
+                    if (!dest) throw new Error("No dest defined")
+                    
+                    try {
+                      const imageWeb = constrImageWeb(alg, res)
+                      imageWeb(src, dest, { silent: true })
+                    }
+                    catch(e) {
+                      throw new Error(`Failed during compression. Setup was ok. Args: alg: ${alg}, res: ${res}, src: ${src}, dest: ${dest}. Error: ${e.message}`)
+                    }
+                  }
+                  else throw new Error("No compressImages script defined")
+                }
+                else throw new Error("No scripts defined")
+              }
+              catch(e) {
+                err(`Failed to build preview images. Continuing anyway.`)
+                console.error(e)
+              }
+              
+
+
+
+
               try {
                 await createNginxConf(conf, log, err)
                 console.log("Done with hash creation")
