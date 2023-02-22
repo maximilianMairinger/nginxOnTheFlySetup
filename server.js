@@ -35,10 +35,7 @@ function isHarmfull(p) {
   return !p.match(notHarmfullRegex)
 }
 
-function parseYesOrNoToBool(str, defaultVal = true) {
-  if (!str) return defaultVal
-  return str.toLowerCase().startsWith("y")
-}
+
 
 
 
@@ -162,7 +159,7 @@ app.ws("/", (ws) => {
     
           let q = msg.req.try
 
-          const wantsHTTPS = parseYesOrNoToBool(await ask("Is https needed? (Y/n)"), true)
+          const wantsHTTPS = isConfirmation(await ask("Is https needed? (Y/n)"), true)
           
 
     
@@ -305,7 +302,7 @@ app.ws("/", (ws) => {
                     log(`${mentHash}.${q.commit.domain}.maximilian.mairinger.com`)
                     try {
                       mentIt = isConfirmation(await ask("Did you mean this? (Y/n)"))
-                      if (!mentIt) hashesOri = hashesOri.slice(index + 1)
+                      if (!mentIt) hashesOri.splice(index, 1)
                     }
                     catch(e) {
                       return
