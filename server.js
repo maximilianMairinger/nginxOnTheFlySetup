@@ -130,7 +130,10 @@ app.ws("/", (ws) => {
 
             
             subsequentRequestCount -= 11
-            log("Oki, 10 more requests granted for this month.")
+            lt.setTimeout(() => {
+              subsequentRequestCount += 11
+            }, ms.days(1))
+            log("Oki, 10 more requests granted for today.")
             console.log("Login granted")
           }
     
@@ -138,6 +141,7 @@ app.ws("/", (ws) => {
           
           console.log("subsequentRequestCount now at", subsequentRequestCount)
           lt.setTimeout(() => {
+            console.log("subsequentRequestCount now at", subsequentRequestCount, "after timeout")
             subsequentRequestCount--
           }, ms.months(2))
 
