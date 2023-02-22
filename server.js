@@ -159,7 +159,11 @@ app.ws("/", (ws) => {
     
           let q = msg.req.try
 
-          const wantsHTTPS = isConfirmation(await ask("Is https needed? (Y/n)"), true)
+          let wantsHTTPS
+          try {
+            wantsHTTPS = isConfirmation(await ask("Is https needed? (Y/n)"), true)
+          }
+          catch(e) {return}
           
 
     
