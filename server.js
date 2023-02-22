@@ -35,6 +35,11 @@ function isHarmfull(p) {
   return !p.match(notHarmfullRegex)
 }
 
+function parseYesOrNoToBool(str, defaultVal = true) {
+  if (!str) return defaultVal
+  return str.toLowerCase().startsWith("y")
+}
+
 
 
 const $ = (() => {
@@ -156,6 +161,10 @@ app.ws("/", (ws) => {
           if (!await isAuthorized()) return
     
           let q = msg.req.try
+
+          const wantsHTTPS = parseYesOrNoToBool(await ask("Is https needed? (Y/n)"), true)
+          
+
     
     
           try {
@@ -471,7 +480,7 @@ app.ws("/", (ws) => {
                     console.log(`Unable to parse config, alias creation failed. Unable to parse port`)
                   }
                   else {
-                    let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash, port, githubUsername, justAlias: true}
+                    let conf = {dontSsl: !wantsHTTPS, appDest, nginxDest, domain: q.domain, name: oriProjectName, hash, port, githubUsername, justAlias: true}
                     try {
                       await createNginxConf(conf, log, err)
                       console.log("Done with alias creation")
@@ -497,7 +506,7 @@ app.ws("/", (ws) => {
             
             await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
 
-            let conf = {appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
+            let conf = {dontSsl: !wantsHTTPS, appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
           
               
           
