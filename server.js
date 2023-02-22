@@ -542,7 +542,7 @@ app.ws("/", (ws) => {
                     
                     try {
                       const imageWeb = constrImageWeb(alg, res)
-                      await imageWeb(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: true })
+                      await imageWeb(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: false })
                     }
                     catch(e) {
                       throw new Error(`Failed during compression. Setup was ok. Args: alg: ${alg}, res: ${res}, src: ${src}, dest: ${dest}. Error: ${e.message}`)
