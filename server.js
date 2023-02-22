@@ -534,14 +534,14 @@ app.ws("/", (ws) => {
                     if (alg === undefined) throw new Error("No webp or jpg algorithm defined")
                     const res = ast.args.resolutions.includes("PREV") ? ["PREV"] : undefined
                     if (res === undefined) throw new Error("No PREV resolution defined")
-                    const src = ast.cmds[0]
+                    const src = ast.cmds[1]
                     if (!src) throw new Error("No src defined")
-                    const dest = ast.cmds[1]
+                    const dest = ast.cmds[2]
                     if (!dest) throw new Error("No dest defined")
                     
                     try {
                       const imageWeb = constrImageWeb(alg, res)
-                      imageWeb(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: true })
+                      await imageWeb(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: true })
                     }
                     catch(e) {
                       throw new Error(`Failed during compression. Setup was ok. Args: alg: ${alg}, res: ${res}, src: ${src}, dest: ${dest}. Error: ${e.message}`)
