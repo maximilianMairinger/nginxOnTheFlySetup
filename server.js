@@ -531,7 +531,7 @@ app.ws("/", (ws) => {
                   if (pack.scripts.compressImages !== undefined) {
                     const cmd = pack.scripts.compressImages
                     const ast = cliCmdParser.toAst(cmd)
-                    const alg = ast.args.algorithms.includes("jpg") ? ["jpg"] : undefined
+                    const alg = ast.args.algorithms.includes("webp") ? ["webp"] : (ast.args.algorithms.includes("jpg") ? ["jpg"] : undefined)
                     if (alg === undefined) throw new Error("No webp or jpg algorithm defined")
                     const res = ast.args.resolutions.includes("PREV") ? ["PREV"] : undefined
                     if (res === undefined) throw new Error("No PREV resolution defined")
