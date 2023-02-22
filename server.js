@@ -518,11 +518,13 @@ app.ws("/", (ws) => {
                 const myAppPath = path.resolve(path.join(conf.appDest, conf.name, conf.hash))
                 let pack
                 try {
-                  pack = JSON.parse(await fs.read(path.join(myAppPath, "package.json")))
+                  pack = JSON.parse(await fs.readFile(path.join(myAppPath, "package.json"), "utf8"))
                 }
                 catch(e) {
                   console.error(`No package.json found. myAppPath: ${myAppPath}`)
                 }
+
+
                 
                 if (pack.scripts !== undefined) {
                   if (pack.scripts.compressImages !== undefined) {
