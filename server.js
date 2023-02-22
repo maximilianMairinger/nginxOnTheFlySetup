@@ -515,8 +515,15 @@ app.ws("/", (ws) => {
 
               log(`Compressing preview images...`)
               try {
-                const myAppPath = path.join(conf.appDest, conf.name, conf.hash)
-                const pack = JSON.parse(path.join(myAppPath, "package.json"))
+                const myAppPath = path.resolve(path.join(conf.appDest, conf.name, conf.hash))
+                let pack
+                try {
+                  pack = JSON.parse(path.join(myAppPath, "package.json"))
+                }
+                catch(e) {
+                  console.error(`No package.json found. myAppPath: ${myAppPath}`)
+                }
+                
                 if (pack.scripts !== undefined) {
                   if (pack.scripts.compressImages !== undefined) {
                     const cmd = pack.scripts.compressImages
