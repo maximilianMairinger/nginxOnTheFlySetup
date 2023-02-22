@@ -533,8 +533,13 @@ app.ws("/", (ws) => {
                     const ast = cliCmdParser.toAst(cmd)
                     const alg = ast.args.algorithms.includes("webp") ? ["webp"] : (ast.args.algorithms.includes("jpg") ? ["jpg"] : undefined)
                     if (alg === undefined) throw new Error("No webp or jpg algorithm defined")
-                    const res = ast.args.resolutions.includes("PREV") ? ["PREV"] : undefined
-                    if (res === undefined) throw new Error("No PREV resolution defined")
+
+                    const resArg = ast.args.resolutions.split(/,| /).map(e => e.toUpperCase().trim()).filter(e => e.length > 0)
+                    const prevRes = resArg.includes("PREV") ? "PREV" : resArg.includes("TINY") ? "TINY" : resArg.includes("LD") ? "LD" : resArg.includes("SD") ? "SD" : "PREV"
+                    const bigRes = resArg.includes("FHD") ? "FHD" : resArg.includes("HD") ? "HD" : resArg.includes("QHD") ? "QHD" : resArg.includes("UHD") ? "UHD" : "FHD"
+
+                    const res =[prevRes, bigRes]
+
                     const src = ast.cmds[1]
                     if (!src) throw new Error("No src defined")
                     const dest = ast.cmds[2]
