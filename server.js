@@ -506,7 +506,8 @@ app.ws("/", (ws) => {
 
               log(`Compressing preview images...`)
               try {
-                const pack = JSON.parse(path.join(conf.appDest, "package.json"))
+                const myAppPath = path.join(conf.appDest, conf.name, conf.hash)
+                const pack = JSON.parse(path.join(myAppPath, "package.json"))
                 if (pack.scripts !== undefined) {
                   if (pack.scripts.compressImages !== undefined) {
                     const cmd = pack.scripts.compressImages
@@ -522,7 +523,7 @@ app.ws("/", (ws) => {
                     
                     try {
                       const imageWeb = constrImageWeb(alg, res)
-                      imageWeb(src, dest, { silent: true })
+                      imageWeb(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: true })
                     }
                     catch(e) {
                       throw new Error(`Failed during compression. Setup was ok. Args: alg: ${alg}, res: ${res}, src: ${src}, dest: ${dest}. Error: ${e.message}`)
