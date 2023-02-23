@@ -538,7 +538,7 @@ app.ws("/", (ws) => {
                     const prevRes = resArg.includes("PREV") ? "PREV" : resArg.includes("TINY") ? "TINY" : resArg.includes("LD") ? "LD" : resArg.includes("SD") ? "SD" : "PREV"
                     const bigRes = resArg.includes("FHD") ? "FHD" : resArg.includes("HD") ? "HD" : resArg.includes("QHD") ? "QHD" : resArg.includes("UHD") ? "UHD" : "FHD"
 
-                    const res =[prevRes, bigRes]
+                    const res = [prevRes]
 
                     const src = ast.cmds[1]
                     if (!src) throw new Error("No src defined")
@@ -546,8 +546,10 @@ app.ws("/", (ws) => {
                     if (!dest) throw new Error("No dest defined")
                     
                     try {
-                      const imageWeb = constrImageWeb(alg, res)
-                      await imageWeb(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: false })
+                      await constrImageWeb(alg, res)(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: false }).then(() => {
+                        log(`Successfully compressed preview images, compressing fully sized images in the background. This may take some time to complete, but you can use the app already.`)
+                        constrImageWeb(alg, [bigRes])(path.join(myAppPath, src), path.join(myAppPath, dest), { silent: false })
+                      })
                     }
                     catch(e) {
                       throw new Error(`Failed during compression. Setup was ok. Args: alg: ${alg}, res: ${res}, src: ${src}, dest: ${dest}. Error: ${e.message}`)
