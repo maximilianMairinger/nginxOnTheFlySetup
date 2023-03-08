@@ -39,4 +39,4 @@ jobs:
           nvm use default
           npm i
           npm run build --if-present
-          pm2 reload ecosystem.config.js
+          node pm2Reload

@@ -6,3 +6,5 @@ rateLimitPw
 domainProjectIndex
 auth.json
 .DS_Store
+ecosystem.config.js
+.ecosystemCache
