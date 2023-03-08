@@ -20,6 +20,7 @@ const cliCmdParser = require("cli-cmd-ast")
 const { constrImageWeb } = require("image-web")
 const { josmFsAdapter } = require("josm-fs-adapter")
 const Fuse = require("fuse.js")
+const argon2 = require("argon2")
 
 
 
@@ -43,9 +44,7 @@ function isHarmfull(p) {
 
 
 
-// const authDB = josmFsAdapter("auth.json", () => {
-//   return {lel: ""}
-// })
+
 
 
 
@@ -107,12 +106,15 @@ app.use(bodyParser.json());
 
 
 
-let subsequentRequestCount = 0
-let subsequentPasswordTestCount = 0
-let pwTestDenied = false
-let subsequentPasswordTestTimeouts = 0
+const initPw = salt({ length: 30 })
+console.log("Init password:", initPw)
 
-const actualRateLimitPw = process.env.rateLimitPw ? process.env.rateLimitPw.toString() : salt({ length: 20 })
+const authDBProm = josmFsAdapter("auth.json", () => {
+  return {
+    authorizedDevices: {},
+    pw: ""
+  }
+})
 
 app.ws("/", (ws) => {
   function log(msg) {
@@ -138,60 +140,57 @@ app.ws("/", (ws) => {
       }
 
       let response = await (async () => {
-        async function isAuthorized() {
-          if (pwTestDenied) return false
-          if (subsequentRequestCount > 30) {
-            err("Sorry. Rate limited.")
 
-            await delay(ms.seconds(.5))
-            let pwTest = ""            
-    
-            while (actualRateLimitPw !== (pwTest + "")) {
-              subsequentPasswordTestCount++
+        const authDB = await authDBProm
 
-              await delay(ms.seconds(.5))
-              try {
-                pwTest = await ask("Password", {type: "password"})  
+
+
+        async function isAuthorized({deviceToken}) {
+
+          function sendNewDeviceToken() {
+            const newDeviceToken = salt({ length: 30 })
+            authDB.authorizedDevices({[newDeviceToken]: true})
+            ws.send(JSON.stringify({newDeviceToken}))
+          }
+
+          if (authDB.authorizedDevices[deviceToken]) {
+            authDB.authorizedDevices({[deviceToken]: undefined})
+            sendNewDeviceToken()
+            return true
+          }
+          else {
+            if (deviceToken !== undefined) {
+              err("Unauthorized device token! This can only happen if someone got a copy of a previous device token and invalidated the current one. Check the server logs.")
+              return false
+            }
+            else {
+              if (authDB.pw.get() === "") {
+                const tryPw = await ask("Init Password", {type: "password"})
+                if (tryPw === initPw) {
+                  sendNewDeviceToken()
+                  pw = await argon2.hash(await ask("New password", {type: "password"}))
+                  log("Password set!")
+
+                  return true
+                }
+                else {
+                  err("Wrong password!")
+                  return false
+                }
               }
-              catch(e) {
-                return false
-              }
-              
-              console.log("Login denied. SubsequentPasswordTestCount now at: " + subsequentPasswordTestCount)
-              err("Sorry again. Wrong password.")
-              if (subsequentPasswordTestCount > 5) {
-                subsequentPasswordTestTimeouts++
-                pwTestDenied = true
-                const timeoutMs = ms.seconds(10 * Math.pow(3, subsequentPasswordTestTimeouts))
-                log("You are going too fast. Retry in " + prettyMs(timeoutMs))
-                lt.setTimeout(() => {
-                  pwTestDenied = false
-                }, timeoutMs)
-                return false
+              else {
+                const pw = await ask("Password", {type: "password"})
+                if (await argon2.verify(authDB.pw.get(), pw)) {
+                  sendNewDeviceToken()
+                  return true
+                }
+                else {
+                  err("Wrong password!")
+                  return false
+                }
               }
             }
-
-            
-            subsequentRequestCount -= 11
-            lt.setTimeout(() => {
-              subsequentRequestCount += 11
-            }, ms.days(1))
-            log("Oki, 10 more requests granted for today.")
-            console.log("Login granted")
           }
-    
-          subsequentRequestCount++
-          
-          console.log("subsequentRequestCount now at", subsequentRequestCount)
-          lt.setTimeout(() => {
-            console.log("subsequentRequestCount now at", subsequentRequestCount, "after timeout")
-            subsequentRequestCount--
-          }, ms.months(2))
-
-
-          subsequentPasswordTestCount = 0
-          subsequentPasswordTestTimeouts = 0
-          return true
         }
 
 
