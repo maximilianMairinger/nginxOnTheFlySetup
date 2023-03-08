@@ -18,6 +18,10 @@ const lt = require("long-timeout")
 const prettyMs = require("pretty-ms")
 const cliCmdParser = require("cli-cmd-ast")
 const { constrImageWeb } = require("image-web")
+const { josmFsAdapter } = require("josm-fs-adapter")
+const Fuse = require("fuse.js")
+
+
 
 // config
 const appDest = "/var/www/html"
@@ -36,6 +40,44 @@ function isHarmfull(p) {
 }
 
 
+
+
+
+// const authDB = josmFsAdapter("auth.json", () => {
+//   return {lel: ""}
+// })
+
+
+
+async function getAvailableRepos() {
+  let repos = await fs.readdir(appDest)
+  return repos
+}
+
+
+
+async function getAlreadyUsedUrls() {
+  // parse the nginx config files and get all urls
+  let nginxConfigs = await fs.readdir(path.join(nginxDest, "sites-available"))
+
+  let allUrls = []
+  let proms = []
+  for (const nginxConfig of nginxConfigs) {
+    proms.push(fs.readFile(path.join(nginxDest, "sites-available", nginxConfig), "utf8").then((config) => {
+      let urlDeclarations = config.match(/(?<=server_name )( *([a-z]|[A-Z]|[0-9]|\.|\-)*)*(?=;)/g)
+      if (urlDeclarations) {
+        let urls = []
+        for (let urlsString of urlDeclarations) {
+          urlsString = urlsString.trim()
+          urls.push(...urlsString.split(/ +/g))
+        }
+        allUrls.push(...urls)
+      }
+    }))
+  }
+  await Promise.all(proms)
+  return allUrls
+}
 
 
 
@@ -61,7 +103,6 @@ let wsApp = expressWs(app)
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-
 
 
 
@@ -157,67 +198,72 @@ app.ws("/", (ws) => {
         if (msg.req.try) {
           if (!await isAuthorized()) return
     
-          let q = msg.req.try
+          let q = {commit: {}}
 
-          let wantsHTTPS
-          try {
-            wantsHTTPS = isConfirmation(await ask("Is https needed? (Y/n)"), true)
-          }
-          catch(e) {return}
+          
           
 
     
     
           try {
             log("Setting up environment...")
+
+
+
+
+            const availableRepos = await getAvailableRepos() // as string[]
+            const fuse = new Fuse(availableRepos)
+
+
+            const alreadyUsedUrls = (await getAlreadyUsedUrls()).map((s) => s.toLowerCase())
+
+            let repo 
+            let hash
+            let domain
+
             
-            let projectsOri = await fs.readdir(appDest)
-            let projectsLowerCase = []
-            projectsOri.forEach((e) => {
-              projectsLowerCase.push(e.toLowerCase())
-            })
-
-            console.log(q)
-
-
-
-
-            let repo = ""
-            
-            if (q.commit.domain !== undefined) {
-              let p = path.join(__dirname, "domainProjectIndex")
-              let indexRaw = ""
-              if (fsSync.existsSync(p)) {
-                indexRaw = (await fs.readFile(p)).toString()
-              }
-              indexRaw = indexRaw.trim()
-              let ar = indexRaw.split("\n")
-              let index = {}
-              ar.forEach((e) => {
-                let q = e.split("|")
-                index[q[0]] = q[1]
-              })
-              if (index[q.commit.domain] !== undefined) repo = index[q.commit.domain]
-              else {
-                repo = q.commit.domain
-              }
+            let wantsHTTPS
+            try {
               
+              while(repo === undefined) {
+                const tryRepo = await ask("Github repo")
+                const bestMatch = fuse.search(tryRepo)[0].item
+                const isExactMatch = bestMatch === tryRepo
+                if (isExactMatch || isConfirmation(await ask(`Did you mean ${bestMatch}? (Y/n)`))) {
+                  repo = bestMatch
+                }
+              }
+  
+              hash = await ask("Commit hash/branch name")
+              
+              
+              let isAlreadyUsed = true
+              let tryDomain
+              while(isAlreadyUsed) {
+                tryDomain = await ask("Domain", {}, `${hash}.${repo}.maximilian.mairinger.com`)
+                isAlreadyUsed = alreadyUsedUrls.includes(tryDomain.toLowerCase())
+                if (isAlreadyPresent) {
+                  console.error("Domain already in use")
+                }
+              }
+              domain = tryDomain
+
+              wantsHTTPS = isConfirmation(await ask("Is https needed? (Y/n)"), true)
             }
-            else if (q.commit.repo !== undefined) {
-              repo = q.commit.repo
-              q.commit.domain = repo
-            }
-            else {
+            catch(e) {
+              console.error("error while asking questions", e)
               return false
             }
 
 
-            if (!q.domain) q.domain = q.commit.hash + "." + repo
+            q.commit.domain = repo
+            q.commit.hash = hash
+            q.domain = domain
+
+
             if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
 
             q.domain = q.domain.split(".").map(s => slugify(s)).join(".").toLowerCase()
-            // just in case slugify changes its behaviour
-            q.domain = q.domain.split("|").join("or")
 
 
             let isAnySubdomainHarmfull = false
@@ -234,35 +280,12 @@ app.ws("/", (ws) => {
               return
             }
 
-            let hash = q.commit.hash
+
 
             
-            let repoLower = repo.toLowerCase()
-            let projectNameFindIndex = projectsLowerCase.indexOf(repoLower)
-            if (projectNameFindIndex === -1) {
-              err("Unable to find project")
-              try {
-                while(projectNameFindIndex === -1) {
-                  console.log("Unable to find repo \"" + repo + "\" in active repo repository. Asking for new name...")
 
-                  repo = await ask("Please enter a valid project name")
-                  if (!await isAuthorized()) return 
-                  if (isHarmfull(repo)) {
-                    console.warn("Invalid repo name tried. \"" + repo + "\"")
-                    err(`Thats not a valid repo name`)
-                    continue
-                  }
-                  repoLower = repo.toLowerCase()
-                  projectNameFindIndex = projectsLowerCase.indexOf(repoLower)
-                }
-              }
-              catch(e) {
-                return 
-              }
-              
-            }
                     
-            let oriProjectName = projectsOri[projectNameFindIndex]
+            let oriProjectName = q.commit.domain
     
             let createAppConf
             let createNginxConf
@@ -617,12 +640,12 @@ app.ws("/", (ws) => {
 
   let askLs = []
   let inAsk = false
-  function ask(question, options) {
+  function ask(question, options, defaultVal) {
     return new Promise(async (res) => {
       if (!inAsk) {
         inAsk = true
         try {
-          let resp = await sendQuestionToClient(question, options)
+          let resp = await sendQuestionToClient(question, options, defaultVal)
           res(resp)
         }
         catch(e) {
@@ -636,7 +659,7 @@ app.ws("/", (ws) => {
           ask(...next.args).then(next.res)
         }
       }
-      else askLs.push({args: [question, options], res})
+      else askLs.push({args: [question, options, defaultVal], res})
     })
   }
 

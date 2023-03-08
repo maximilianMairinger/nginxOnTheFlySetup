@@ -4,7 +4,16 @@ if (location.host !== slugify(location.host)) {
 }
 
 
-const ws = new WebSocket("ws://" + location.host)
+const ws = new WebSocket("ws://" + location.host);
+
+
+
+
+
+
+
+
+
 
 
 const gui = (() => {
@@ -100,13 +109,21 @@ const gui = (() => {
     }
   }
 
+
+  function isSafe(str) {
+    // matches only common char
+    return /^[a-zA-Z0-9-_. ]*$/.test(str)
+  }
+
   let id = 0
-  function inq(question, options = {nonoPostFix: false, type: "text", replace: undefined, check: undefined}) {
+  function inq(question, options = {nonoPostFix: false, type: "text", replace: undefined, check: undefined}, defaultVal = "") {
     return new Promise((res) => {
       setTitle(question)
       if (onAnyLog) onAnyLog("inq")
-      if (!(question.endsWith("?") || question.endsWith(":")) && !options.nonoPostFix) question = question + ":"
-      apd(`<div class="message">${saniHTML(question)}</div><input id="inp${id}" type="${options.type}" autocomplete="off"><br><br>`)
+      if (!(question.endsWith("?") || question.endsWith(":") || question.endsWith(")")) && !options.nonoPostFix) question = question + ":"
+      if (!isSafe(options.type)) throw new Error("Invalid type")
+      if (!isSafe(defaultVal)) throw new Error("Invalid default value")
+      apd(`<div class="message">${saniHTML(question)}</div><input id="inp${id}" type="${options.type}" value="${defaultVal}" autocomplete="off"><br><br>`)
       let inputElem = document.getElementById("inp" + id)
       inputElem.style.width = `calc(100% - ${inputElem.previousSibling.offsetWidth + parseInt(getComputedStyle(inputElem.previousSibling).marginRight) + parseInt(getComputedStyle(inputElem).marginRight) + 1}px)`
 
@@ -175,8 +192,6 @@ const gui = (() => {
 let subdomains = location.host.split(".").reverse()
 let overshoot = subdomains.splice(0, 3).reverse();
 
-gui.log(`View any version of any repository by going to <i><a href="http://[version].[repo].${overshoot.join(".")}">[version].[repo].${overshoot.join(".")}</a></i>`);
-
 
 ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
@@ -195,41 +210,28 @@ ws.addEventListener("message", async ({data: msg}) => {
 }); 
 
 async function askName() {
-  let repo, hash, domain
-  gui.log(`You may link a repo under this alias <i>${location.host}</i>!`)
+  let repo, hash
   let r = await gui.ask(`Repository`)
-  if (r.includes("@")) {
-    let split = r.split("@")
-    repo = split[0]
-    hash = split[1]
-  }
-  else {
-    repo = r
-    hash = await gui.ask(`Commit hash`)
-  }
-  domain = location.host
+  repo = r
+  hash = await gui.ask(`Commit hash`)
 
-  return {commit: {repo, hash}, domain}
+  return {commit: {repo, hash}}
+}
+
+async function askDomain({commit}) {
+  const domain = await gui.ask(`Domain for ${commit.repo}#${commit.hash}`)
+  return {commit, domain}
 }
 
 
 ws.addEventListener("open", async () => {
   let o
-  if (subdomains.length < 2 || subdomains.length > 2) {
-    o = await askName()
-  }
-  else {
-    o = {
-      commit: {
-        domain: subdomains[0],
-        hash: subdomains[1]
-      },
-      domain: location.host
-    }
-  }
+  o = await askName()
+  o = await askDomain(o)
+
 
   
-  let resp = await sendRequest({try: o})
+  let resp = await sendRequest({try: true})
   if (resp.redirect) {
     location.href = resp.redirect
   }
