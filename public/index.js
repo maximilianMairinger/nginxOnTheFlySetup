@@ -240,11 +240,6 @@ async function askDomain({commit}) {
 
 
 ws.addEventListener("open", async () => {
-  let o
-  o = await askName()
-  o = await askDomain(o)
-
-
   
   let resp = await sendRequest({try: true})
   if (resp.redirect) {
