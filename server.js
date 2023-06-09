@@ -25,7 +25,7 @@ const sani = require("sanitize-against").default
 
 const saniMsg = sani({req: {
   "try?": {
-    deviceToken: ""
+    "deviceToken?": String 
   }
 }, id: Number})
 
@@ -231,7 +231,7 @@ app.ws("/", (ws) => {
         }
 
 
-
+        
 
         if (msg.req.try) {
           let tryReq = msg.req.try
@@ -239,6 +239,7 @@ app.ws("/", (ws) => {
           
 
           if (!await isAuthorized(tryReq.deviceToken)) return
+          return
     
           let q = {commit: {}}
 
