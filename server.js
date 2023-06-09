@@ -251,7 +251,7 @@ app.ws("/", (ws) => {
 
 
             const repoToUrlIndex = await getRepoToDomainIndex()
-            const availableRepos = repoToUrlIndex.keys() 
+            const availableRepos = [...repoToUrlIndex.keys()]
 
             let repo 
             let hash
