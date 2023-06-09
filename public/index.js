@@ -68,7 +68,9 @@ const gui = (() => {
     setTitle(msg)
     msg = saniHTML(msg)
     if (onAnyLog) onAnyLog(type)
+    const logLine = document.createElement("log-line")
     let div = document.createElement("div")
+    logLine.append(div)
     div.classList.add("message")
     if (type) div.classList.add(type)
     let interval
@@ -111,7 +113,7 @@ const gui = (() => {
     messageAllocation(msg)
 
     
-    apd(div)
+    apd(logLine)
 
     return function update(msg) {
       setTitle(msg)
