@@ -15,13 +15,12 @@ const del = require("del")
 const ms = require("milliseconds")
 const salt = require("crypto-random-string")
 const lt = require("long-timeout")
-const prettyMs = require("pretty-ms")
 const cliCmdParser = require("cli-cmd-ast")
 const { constrImageWeb } = require("image-web")
 const { josmFsAdapter } = require("josm-fs-adapter")
-const Fuse = require("fuse.js")
 const argon2 = require("argon2")
 const sani = require("sanitize-against").default
+
 
 
 const saniMsg = sani({req: {
@@ -51,13 +50,22 @@ function isHarmfull(p) {
 
 
 
-
-
-
-async function getAvailableRepos() {
-  let repos = await fs.readdir(appDest)
-  return repos
+async function getRepoToDomainIndex() {
+  let p = path.join(__dirname, "domainProjectIndex")
+  let indexRaw = ""
+  if (fsSync.existsSync(p)) {
+    indexRaw = (await fs.readFile(p)).toString()
+  }
+  indexRaw = indexRaw.trim()
+  const ar = indexRaw.split("\n")
+  const index = new Map
+  ar.forEach((e) => {
+    let q = e.split("|")
+    index.set(q[1], q[0])
+  })
+  return index
 }
+
 
 
 
@@ -234,42 +242,26 @@ app.ws("/", (ws) => {
     
           let q = {commit: {}}
 
-
+          // todo: make list with used ports in nginxCdSetup and check before using. Use fs and always access file, as nginxCdSetup is a script
             
     
           try {
             log("Setting up environment...")
 
 
-
-
-            const availableRepos = await getAvailableRepos() // as string[]
-
-
-            const alreadyUsedUrls = (availableRepos).map((s) => s.toLowerCase())
+            const repoToUrlIndex = await getRepoToDomainIndex()
+            const availableRepos = repoToUrlIndex.keys() 
 
             let repo 
             let hash
             let domain
-
-            
             let wantsHTTPS
+
             try {
-              
               const repo = await ask("Github repo", availableRepos)
               hash = await ask("Commit hash/branch name")  
-              
-              let isAlreadyUsed = true
-              let tryDomain
-              while(isAlreadyUsed) {
-                tryDomain = await ask("Domain", {defaultVal: `${hash.toLowerCase()}.${repo.toLowerCase()}.maximilian.mairinger.com`})
-                isAlreadyUsed = alreadyUsedUrls.includes(tryDomain.toLowerCase())
-                if (isAlreadyPresent) {
-                  err("Domain already in use")
-                }
-              }
-              domain = tryDomain
-
+              domain = await ask("Domain", {defaultVal: `${hash.toLowerCase()}.${repoToUrlIndex.get(repo)}.maximilian.mairinger.com`})
+              // we could track all urls already in use and catch here
               wantsHTTPS = isConfirmation(await ask("Is https needed? (Y/n)"), true)
             }
             catch(e) {
@@ -282,8 +274,6 @@ app.ws("/", (ws) => {
             q.commit.hash = hash
             q.domain = domain
 
-
-            if (!q.domain.endsWith(".maximilian.mairinger.com")) q.domain = q.domain + ".maximilian.mairinger.com"
 
             q.domain = q.domain.split(".").map(s => slugify(s)).join(".").toLowerCase()
 
@@ -499,7 +489,6 @@ app.ws("/", (ws) => {
             if (isAlreadyPresent) {
               if (!q.domain) {
                 err(`Go away! :C`)
-                subsequentRequestCount = Infinity
               }
               else {
                 console.log("make alias")
@@ -513,14 +502,15 @@ app.ws("/", (ws) => {
                   return
                 }
                 
-                config = config.trimLeft().toLowerCase()
+                config = config.trimStart().toLowerCase()
                 const begin = "upstream nodejs_upstream_"
                 if (!config.startsWith(begin)) {
                   err(`Unable to parse config, alias creation failed`)
                   console.log(`Unable to parse config, alias creation failed. Wrong beginning`)
                 }
                 else {
-                  let port = parseInt(config.substr(begin.length, 6))
+                  let port = parseInt(config.substring(begin.length, begin.length + 6))
+
                   if (isNaN(port)) {
                     err(`Unable to parse config, alias creation failed`)
                     console.log(`Unable to parse config, alias creation failed. Unable to parse port`)
@@ -552,7 +542,14 @@ app.ws("/", (ws) => {
             
             await fs.mkdir(path.join(appDest, oriProjectName, q.commit.hash))
 
-            let conf = {dontSsl: !wantsHTTPS, appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port: await detectPort(startPort), githubUsername}
+            const port = await (async () => {
+              const usedPorts = await josmFsAdapter("usedPorts.json", 0)
+              const port = await detectPort(startPort + usedPorts.get())
+              usedPorts.set(usedPorts.get() + 1)
+              return port
+            })()
+            
+            let conf = {dontSsl: !wantsHTTPS, appDest, nginxDest, domain: q.domain, name: oriProjectName, hash: q.commit.hash, port, githubUsername}
           
               
           
@@ -616,7 +613,7 @@ app.ws("/", (ws) => {
               try {
                 await createNginxConf(conf, log, err)
                 console.log("Done with hash creation")
-                return true
+                return conf.domain
               }
               catch(e) {
                 console.log("Failure after pm2 start! Cleanup: Killing processes.")

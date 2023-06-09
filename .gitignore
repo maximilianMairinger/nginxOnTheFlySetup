@@ -4,6 +4,7 @@ test_out
 log
 rateLimitPw
 domainProjectIndex
+usedPorts.json
 auth.json
 .DS_Store
 ecosystem.config.js
