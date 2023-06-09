@@ -30,7 +30,6 @@ function normalizeWsUrlProtocol(url = "") {
 
 
 
-
 const gui = (() => {
   function stripHTML(html) {
     return sanitizeHtml(html, {allowedTags: []})
@@ -131,25 +130,106 @@ const gui = (() => {
   }
 
   let id = 0
-  function inq(question, options = {nonoPostFix: false, type: "text", replace: undefined, check: undefined}, defaultVal = "") {
+  const defaultOptions = {nonoPostFix: false, type: "text", replace: undefined, check: undefined, defaultVal: "", select: undefined}
+  function inq(question, options = defaultOptions) {
     return new Promise((res) => {
       setTitle(question)
       if (onAnyLog) onAnyLog("inq")
       if (!(question.endsWith("?") || question.endsWith(":") || question.endsWith(")")) && !options.nonoPostFix) question = question + ":"
+
+      
+      if (options instanceof Array) {
+        let select = options
+        options = Object.create(null)
+        for (const key in defaultOptions) options[key] = defaultOptions[key]
+        options.select = select
+
+        options.check = (val) => options.select.includes(val)
+      }
+      else for (const key in defaultOptions) if (options[key] === undefined) options[key] = defaultOptions[key]
+
+
+
       if (!isSafe(options.type)) throw new Error("Invalid type")
-      if (!isSafe(defaultVal)) throw new Error("Invalid default value")
-      apd(`<div class="message">${saniHTML(question)}</div><input id="inp${id}" type="${options.type}" value="${defaultVal}" autocomplete="off"><br><br>`)
-      let inputElem = document.getElementById("inp" + id)
-      inputElem.style.width = `calc(100% - ${inputElem.previousSibling.offsetWidth + parseInt(getComputedStyle(inputElem.previousSibling).marginRight) + parseInt(getComputedStyle(inputElem).marginRight) + 1}px)`
+      if (!isSafe(options.defaultVal)) throw new Error("Invalid default value")
+      apd(`<log-line id=i${id}><div class="message">${saniHTML(question)}</div><input-body><input type="${options.type}" value="${options.defaultVal}" autocomplete="off">${options.select === undefined ? "" : `<auto-complete></auto-complete>`}</input-body></log-line>`)
+      const logLineElem = document.querySelector(`#i${id}`)
+      const inputElem = logLineElem.querySelector(`input`)
+      
 
       inputElem.focus()
-      inputElem.addEventListener("keydown", ({key}) => {
-        if (key === "Enter") {
-          if (currentlyFine) {
-            submit()
+      if (!options.select) {
+        inputElem.addEventListener("keydown", ({key}) => {
+          if (key === "Enter") {
+            if (currentlyFine) {
+              submit()
+            }
           }
+        })
+      }
+      else {
+        const autoCompleteElem = logLineElem.querySelector(`auto-complete`)
+        const fuse = new Fuse(options.select, {
+          includeMatches: true
+        })
+
+        const maxLen = 3
+        
+
+        // .search(inputElem.value).forEach(({item}) => {
+        let matches
+        let fireAutoCompleteOnInputFunc = () => {}
+        inputElem.addEventListener("input", fireAutoCompleteOnInputFunc = () => {
+          const val = inputElem.value
+
+          matches = fuse.search(val)
+          matches.length = maxLen
+          autoCompleteElem.innerHTML = "<auto-complete-elem>" + matches.map(({item, matches}) => {
+            let str = ""
+            let lastEndIndex = 0
+            matches[0].indices.forEach(([start, end]) => {
+              str += item.substring(lastEndIndex, start)
+              str += `<b>${item.substring(start, end + 1)}</b>`
+              lastEndIndex = end + 1
+            })
+            str += item.substring(lastEndIndex)
+            return str
+          }).join("</auto-complete-elem><auto-complete-elem>") + "</auto-complete-elem>"
+
+        })
+
+        
+
+        inputElem.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            if (currentlyFine) {
+              submit(matches[0].item)
+            }
+            else {
+              if (matches.length > 0) {
+                inputElem.value = matches[0].item
+                fireCheckOnInputFunc()
+                fireAutoCompleteOnInputFunc()
+              }
+            }
+          }
+          else if (e.key === "Tab") {
+            e.preventDefault()
+            if (matches.length > 0) {
+              inputElem.value = matches[0].item
+              fireCheckOnInputFunc()
+              fireAutoCompleteOnInputFunc()
+            }
+          }
+        })
+
+
+        const ogSubmit = submit
+        submit = (val) => {
+          logLineElem.style.paddingBottom = getComputedStyle(autoCompleteElem).height
+          ogSubmit(val)
         }
-      })
+      }
 
       function submit(val = inputElem.value) {
         inputElem.setAttribute("disabled", true)
@@ -164,6 +244,8 @@ const gui = (() => {
           inputElem.value = options.replace(inputElem.value)
         })
       }
+
+      let fireCheckOnInputFunc = () => {}
       let lastFineText = null
       if (options.check !== undefined) {
         currentlyFine = options.check(inputElem.value)
@@ -172,7 +254,7 @@ const gui = (() => {
           lastFineText = inputElem.value
           inputElem.style.color = ""
         }
-        inputElem.addEventListener("input", () => {
+        inputElem.addEventListener("input", fireCheckOnInputFunc = () => {
           currentlyFine = options.check(inputElem.value)
           if (!currentlyFine) inputElem.style.color = "red"
           else {
@@ -210,6 +292,7 @@ let overshoot = subdomains.splice(0, 3).reverse();
 
 ws.addEventListener("message", async ({data: msg}) => {
   msg = JSON.parse(msg)
+  console.log(msg)
   if (msg.log) {
     gui.log(msg.log)
   }
@@ -221,6 +304,9 @@ ws.addEventListener("message", async ({data: msg}) => {
   }
   else if (msg.req) {
     reqIndex.get(msg.req.id)(msg.req.resp)
+  }
+  else if (msg.newDeviceToken) {
+    localStorage.deviceToken = msg.newDeviceToken
   }
 }); 
 
@@ -241,17 +327,21 @@ async function askDomain({commit}) {
 
 ws.addEventListener("open", async () => {
   
-  let resp = await sendRequest({try: true})
+  let resp = await sendRequest({try: { deviceToken: localStorage.deviceToken }})
   if (resp.redirect) {
     location.href = resp.redirect
   }
   else if (resp.suc) {
     gui.log("Done :D")
+    const redirect = typeof resp.suc === "string"
     let timer = 10000
     setTimeout(() => {
-      location.reload()
+      if (!redirect) location.reload()
+      else location.href = resp.suc
     }, timer)
-    let updateReloading = gui.log("Reloading in " + timer + "ms")
+
+    const logBegin = `${redirect ? "Redirecting" : "Reloading"} in `
+    let updateReloading = gui.log(logBegin + timer + "ms")
     
     let lastTime = Date.now()
     let f = () => {
@@ -261,7 +351,7 @@ ws.addEventListener("open", async () => {
       let timeDelta = curTime - lastTime
       timer -= timeDelta
 
-      updateReloading("Reloading in " + timer + "ms")
+      updateReloading(logBegin + timer + "ms")
 
       lastTime = curTime
     }

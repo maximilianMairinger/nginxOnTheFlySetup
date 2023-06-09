@@ -21,9 +21,14 @@ const { constrImageWeb } = require("image-web")
 const { josmFsAdapter } = require("josm-fs-adapter")
 const Fuse = require("fuse.js")
 const argon2 = require("argon2")
+const sani = require("sanitize-against").default
 
 
-
+const saniMsg = sani({req: {
+  "try?": {
+    deviceToken: ""
+  }
+}, id: Number})
 
 // config
 const appDest = "/var/www/html"
@@ -118,12 +123,21 @@ const authDBProm = josmFsAdapter("auth.json", () => {
 })
 
 app.ws("/", (ws) => {
+
+  async function wsSend(msg) {
+    try {
+      await ws.send(JSON.stringify(msg))
+    }
+    catch(e) {
+      console.error("Failed to send. ReadyState:", ws.readyState)
+    }
+  }
   function log(msg) {
-    ws.send(JSON.stringify({log: msg}))
+    wsSend({log: msg})
     console.log(msg)
   }
   function err(msg) {
-    ws.send(JSON.stringify({err: msg}))
+    wsSend({err: msg})
     console.error(msg)
   }
 
@@ -131,13 +145,23 @@ app.ws("/", (ws) => {
   ws.on("message", async (msg) => {
     if (!msg) return
     msg = JSON.parse(msg)
-    if (typeof msg !== "object") return
+    
 
     if (msg.req) {
+      try {
+        msg = saniMsg(msg)
+      }
+      catch(e) {
+        console.error("Invalid message:", msg)
+        return
+      }
+      
       let id = msg.id
 
-      function respond(resp) {
-        ws.send(JSON.stringify({req: {id, resp}}))
+      
+
+      async function respond(resp) {
+        wsSend({req: {id, resp}})
       }
 
       let response = await (async () => {
@@ -146,64 +170,72 @@ app.ws("/", (ws) => {
 
 
 
-        async function isAuthorized({deviceToken}) {
+        async function isAuthorized(deviceToken) {
 
           function sendNewDeviceToken() {
             const newDeviceToken = salt({ length: 30 })
             authDB.authorizedDevices({[newDeviceToken]: true})
-            ws.send(JSON.stringify({newDeviceToken}))
+            wsSend({newDeviceToken})
           }
 
           if (authDB.authorizedDevices[deviceToken]) {
-            authDB.authorizedDevices({[deviceToken]: undefined})
-            sendNewDeviceToken()
             return true
           }
           else {
             if (deviceToken !== undefined) {
-              err("Unauthorized device token! This can only happen if someone got a copy of a previous device token and invalidated the current one. Check the server logs.")
+              err("Unauthorized device token!")
               return false
             }
             else {
               if (authDB.pw.get() === "") {
-                const tryPw = await ask("Init Password", {type: "password"})
-                if (tryPw === initPw) {
-                  sendNewDeviceToken()
-                  pw = await argon2.hash(await ask("New password", {type: "password"}))
-                  log("Password set!")
+                for (let i = 0; i < 5; i++) {
+                  const tryPw = await ask("Initial Password", {type: "password"})
+                  if (tryPw === initPw) {
+                    authDB.pw.set(await argon2.hash(await ask("New password", {type: "password"})))
+                    log("Password set!")
+                    const trust = isConfirmation(await ask("Trust this device? (Y/n)"))
+                    if (trust) sendNewDeviceToken()
 
-                  return true
+                    return true
+                  }
+                  else {
+                    err("Wrong password!", i)
+                  }
                 }
-                else {
-                  err("Wrong password!")
-                  return false
-                }
+                return false
               }
               else {
-                const pw = await ask("Password", {type: "password"})
-                if (await argon2.verify(authDB.pw.get(), pw)) {
-                  sendNewDeviceToken()
-                  return true
+                for (let i = 0; i < 5; i++) {
+                  const pw = await ask("Password", {type: "password"})
+                  if (await argon2.verify(authDB.pw.get(), pw)) {
+                    const trust = isConfirmation(await ask("Trust this device? (Y/n)"))
+                    if (trust) sendNewDeviceToken()
+                    return true
+                  }
+                  else {
+                    err("Wrong password!", i)
+                  }
                 }
-                else {
-                  err("Wrong password!")
-                  return false
-                }
+                return false
               }
             }
           }
         }
 
 
+
+
         if (msg.req.try) {
-          if (!await isAuthorized()) return
+          let tryReq = msg.req.try
+ 
+          
+
+          if (!await isAuthorized(tryReq.deviceToken)) return
     
           let q = {commit: {}}
 
-          
-          
 
-    
+            
     
           try {
             log("Setting up environment...")
@@ -212,10 +244,9 @@ app.ws("/", (ws) => {
 
 
             const availableRepos = await getAvailableRepos() // as string[]
-            const fuse = new Fuse(availableRepos)
 
 
-            const alreadyUsedUrls = (await getAlreadyUsedUrls()).map((s) => s.toLowerCase())
+            const alreadyUsedUrls = (availableRepos).map((s) => s.toLowerCase())
 
             let repo 
             let hash
@@ -225,25 +256,16 @@ app.ws("/", (ws) => {
             let wantsHTTPS
             try {
               
-              while(repo === undefined) {
-                const tryRepo = await ask("Github repo")
-                const bestMatch = fuse.search(tryRepo)[0].item
-                const isExactMatch = bestMatch === tryRepo
-                if (isExactMatch || isConfirmation(await ask(`Did you mean ${bestMatch}? (Y/n)`))) {
-                  repo = bestMatch
-                }
-              }
-  
-              hash = await ask("Commit hash/branch name")
-              
+              const repo = await ask("Github repo", availableRepos)
+              hash = await ask("Commit hash/branch name")  
               
               let isAlreadyUsed = true
               let tryDomain
               while(isAlreadyUsed) {
-                tryDomain = await ask("Domain", {}, `${hash}.${repo}.maximilian.mairinger.com`)
+                tryDomain = await ask("Domain", {defaultVal: `${hash.toLowerCase()}.${repo.toLowerCase()}.maximilian.mairinger.com`})
                 isAlreadyUsed = alreadyUsedUrls.includes(tryDomain.toLowerCase())
                 if (isAlreadyPresent) {
-                  console.error("Domain already in use")
+                  err("Domain already in use")
                 }
               }
               domain = tryDomain
@@ -295,7 +317,7 @@ app.ws("/", (ws) => {
               createNginxConf = o.createNginxConf
             }
             catch(e) {
-              console.log("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
+              console.error("Unable to find peer dependency at './../nginxCdSetup/app/createAppConf.js'. Make sure https://github.com/maximilianMairinger/nginxCdSetup is installed in the neighboring folder.")
               err("Unable to find peer dependencies. Check logs for additional infos.")
               return
             }
@@ -307,7 +329,7 @@ app.ws("/", (ws) => {
             let isAlreadyPresent = hashesOri.includes(hash)
             if (!isAlreadyPresent) {
               let myCommitLength = hash.length
-              let hashesTrimmed = hashesOri.map((s) => s.substr(0, myCommitLength))
+              let hashesTrimmed = hashesOri.map((s) => s.substring(0, myCommitLength-1))
               let hashesOriLengths = [...new Set(hashesOri.map((e) => e.length < 7 ? 7 : e.length))]
               let hashAtDifferntLengths = hashesOriLengths.map((e) => hash.substr(0, e))
 
@@ -508,7 +530,7 @@ app.ws("/", (ws) => {
                     try {
                       await createNginxConf(conf, log, err)
                       console.log("Done with alias creation")
-                      return true
+                      return conf.domain
                     }
                     catch(e) {
                       err(e.message)
@@ -631,6 +653,7 @@ app.ws("/", (ws) => {
       else if (response === false) response = {suc: false}
       else if (response === true) response = {suc: true}
       else if (typeof response === "object" && response.suc === undefined) response.suc = false
+      else if (typeof response === "string") response = {suc: response}
       respond(response)
     }
     else if (msg.ask) {
@@ -640,12 +663,16 @@ app.ws("/", (ws) => {
 
   let askLs = []
   let inAsk = false
-  function ask(question, options, defaultVal) {
+  function ask(question, options) {
     return new Promise(async (res) => {
       if (!inAsk) {
         inAsk = true
         try {
-          let resp = await sendQuestionToClient(question, options, defaultVal)
+          let resp = await sendQuestionToClient(question, options)
+          if (options instanceof Array) if (!options.includes(resp)) {
+            err("Invalid response: ", resp, "Expected one of: ", options)
+            // rej("Invalid response")
+          }
           res(resp)
         }
         catch(e) {
@@ -687,8 +714,7 @@ app.ws("/", (ws) => {
           rej()
         }, ms.minutes(10))
         
-        
-        ws.send(JSON.stringify({ask: {id, question, options}}))
+        wsSend({ask: {id, question, options}})
       })
     }
   })()
