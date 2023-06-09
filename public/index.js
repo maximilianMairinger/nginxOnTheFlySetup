@@ -112,7 +112,6 @@ const gui = (() => {
 
     
     apd(div)
-    apd(`<br><br>`)
 
     return function update(msg) {
       setTitle(msg)
