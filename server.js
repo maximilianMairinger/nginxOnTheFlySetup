@@ -40,6 +40,7 @@ function isConfirmation(resp, _default = true) {
   return resp === "" ? _default : resp.toLowerCase().startsWith("y")
 }
 
+
 const notHarmfullRegex = /^([a-z]|[A-Z]|[0-9])*$/g
 function isHarmfull(p) {
   return !p.match(notHarmfullRegex)
@@ -259,9 +260,9 @@ app.ws("/", (ws) => {
             let wantsHTTPS
 
             try {
-              const repo = await ask("Github repo", availableRepos)
+              repo = await ask("Github repo", availableRepos)
               hash = await ask("Commit hash/branch name")  
-              domain = await ask("Domain", {defaultVal: `${hash.toLowerCase()}.${repoToUrlIndex.get(repo)}.maximilian.mairinger.com`})
+              domain = await ask("Domain", {defaultVal: `${hash}.${repoToUrlIndex.get(repo)}.maximilian.mairinger.com`})
               // we could track all urls already in use and catch here
               wantsHTTPS = isConfirmation(await ask("Is https needed? (Y/n)"), true)
             }
