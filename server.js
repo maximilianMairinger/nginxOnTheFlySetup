@@ -239,7 +239,7 @@ app.ws("/", (ws) => {
           
 
           if (!await isAuthorized(tryReq.deviceToken)) return
-          return
+
     
           let q = {commit: {}}
 
